@@ -1,8 +1,23 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { apiClient } from '@/lib/apiClient';
 
 const UserManagement = () => {
-  // State to control modal visibility
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [users, setUsers] = useState<any[]>([]);
+  const [query, setQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState<'All' | 'candidate' | 'employer' | 'admin'>('All');
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const roleParam = roleFilter === 'All' ? '' : roleFilter;
+        const qParam = query ? `&q=${encodeURIComponent(query)}` : '';
+        const res = await apiClient(`/api/users${roleParam ? `?role=${roleParam}${qParam}` : (qParam ? `?${qParam.slice(1)}` : '')}`);
+        setUsers(res || []);
+      } catch {}
+    };
+    load();
+  }, [query, roleFilter]);
 
   return (
     <div className="relative space-y-6">
@@ -28,12 +43,16 @@ const UserManagement = () => {
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#617589]">search</span>
             <input 
               className="w-full bg-[#f0f2f4] border-none rounded-lg pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-[#137fec]/20 outline-none" 
-              placeholder="Search by name or email..." 
+              placeholder="Search by email..." 
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
             />
           </div>
           <div className="flex gap-2">
-            <FilterButton label="Role: All" />
-            <FilterButton label="Status: All" />
+            <button onClick={() => setRoleFilter('All')} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium ${roleFilter==='All' ? 'bg-[#137fec]/10 text-[#137fec]' : 'bg-[#f0f2f4] hover:bg-gray-200'}`}>Role: All</button>
+            <button onClick={() => setRoleFilter('candidate')} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium ${roleFilter==='candidate' ? 'bg-[#137fec]/10 text-[#137fec]' : 'bg-[#f0f2f4] hover:bg-gray-200'}`}>Candidates</button>
+            <button onClick={() => setRoleFilter('employer')} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium ${roleFilter==='employer' ? 'bg-[#137fec]/10 text-[#137fec]' : 'bg-[#f0f2f4] hover:bg-gray-200'}`}>Employers</button>
+            <button onClick={() => setRoleFilter('admin')} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium ${roleFilter==='admin' ? 'bg-[#137fec]/10 text-[#137fec]' : 'bg-[#f0f2f4] hover:bg-gray-200'}`}>Admins</button>
           </div>
         </div>
       </div>
@@ -51,9 +70,12 @@ const UserManagement = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-[#f0f2f4]">
-            <UserRow name="Sarah Chen" email="sarah.c@tech.com" role="Candidate" status="Active" />
-            <UserRow name="Marcus Rodriguez" email="m.rod@solutions.io" role="Employer" status="Active" />
-            <UserRow name="Elena Vance" email="elena.v@freemail.com" role="Candidate" status="Suspended" />
+            {users
+              .filter(u => (roleFilter==='All' ? true : (u.role || '').toLowerCase()===roleFilter))
+              .filter(u => !query || (u.email || '').toLowerCase().includes(query.toLowerCase()))
+              .map(u => (
+                <UserRow key={u.id} name={u.email?.split('@')[0] || u.email} email={u.email} role={(u.role || '').charAt(0).toUpperCase() + (u.role || '').slice(1)} status="Active" />
+              ))}
           </tbody>
         </table>
       </div>

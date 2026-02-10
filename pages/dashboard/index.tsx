@@ -1,20 +1,61 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { useRequireAuth } from '@/lib/requireAuth';
 
 export default function DashboardPage() {
-  const stats = [
-    { label: 'Total Applied', value: '42', trend: '+5 this month', icon: 'description', color: 'text-[#137fec]', bg: 'bg-[#137fec]/10' },
-    { label: 'Interviews', value: '12', trend: '2 scheduled', icon: 'event', color: 'text-amber-500', bg: 'bg-amber-500/10' },
-    { label: 'Offers', value: '3', trend: '1 new offer', icon: 'emoji_events', color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-  ];
+  useRequireAuth('candidate');
+  const router = useRouter();
+  const [stats, setStats] = useState<any[]>([]);
+  const [applications, setApplications] = useState<any[]>([]);
+  const [page, setPage] = useState<number>(Number(router.query.page) || 1);
+  const [limit] = useState<number>(Number(router.query.limit) || 10);
+  const [total, setTotal] = useState(0);
+  const [status, setStatus] = useState<string>((router.query.status as string) || '');
+  const [sort, setSort] = useState<string>((router.query.sort as string) || 'date_desc');
+  const [from, setFrom] = useState<string>((router.query.from as string) || '');
+  const [to, setTo] = useState<string>((router.query.to as string) || '');
+  const [company, setCompany] = useState<string>((router.query.company as string) || '');
 
-  const applications = [
-    { company: 'TechCorp', initial: 'T', role: 'Senior Product Designer', type: 'Remote · Full-time', date: 'Oct 24, 2023', status: 'Interviewing', statusColor: 'bg-blue-100 text-blue-700' },
-    { company: 'Innovate UI', initial: 'I', role: 'Lead UX Researcher', type: 'San Francisco, CA', date: 'Oct 20, 2023', status: 'Offer Received', statusColor: 'bg-emerald-100 text-emerald-700' },
-    { company: 'Global Link', initial: 'G', role: 'Visual Designer', type: 'Contract · Hybrid', date: 'Oct 18, 2023', status: 'Pending', statusColor: 'bg-gray-100 text-gray-600' },
-    { company: 'Studio Noir', initial: 'S', role: 'Interaction Designer', type: 'Berlin, DE', date: 'Oct 12, 2023', status: 'Rejected', statusColor: 'bg-red-100 text-red-700' },
-  ];
+  useEffect(() => {
+    const params = new URLSearchParams();
+    params.set('page', String(page));
+    params.set('limit', String(limit));
+    if (status) params.set('status', status);
+    if (sort) params.set('sort', sort);
+    if (from && to) { params.set('from', from); params.set('to', to); }
+    if (company) params.set('company', company);
+
+    const load = async () => {
+      const res = await fetch(`/api/applications?${params.toString()}`);
+      if (!res.ok) return;
+      const json = await res.json();
+      const rows = json.data;
+      const items = rows.map((r: any) => ({
+        company: r.company_name,
+        initial: r.company_name?.charAt(0) || '?',
+        role: r.title,
+        type: r.location,
+        date: new Date(r.applied_at).toLocaleDateString(),
+        status: r.status === 'applied' ? 'Applied' : r.status === 'shortlisted' ? 'Shortlisted' : r.status === 'hired' ? 'Hired' : 'Rejected',
+        statusColor:
+          r.status === 'applied' ? 'bg-blue-100 text-blue-700' :
+          r.status === 'shortlisted' ? 'bg-amber-100 text-amber-700' :
+          r.status === 'hired' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700',
+      }));
+      setApplications(items);
+      setTotal(json.pagination.total);
+      const s = json.stats;
+      setStats([
+        { label: 'Total Applied', value: String(s.applied), trend: s.trend.totalDeltaPct != null ? `${s.trend.totalDeltaPct}% last 30d` : '', icon: 'description', color: 'text-[#137fec]', bg: 'bg-[#137fec]/10' },
+        { label: 'Shortlisted', value: String(s.shortlisted), trend: '', icon: 'event', color: 'text-amber-500', bg: 'bg-amber-500/10' },
+        { label: 'Hired', value: String(s.hired), trend: '', icon: 'emoji_events', color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+        { label: 'Rejected', value: String(s.rejected), trend: '', icon: 'block', color: 'text-red-500', bg: 'bg-red-500/10' },
+      ]);
+    };
+    load();
+  }, [page, limit, status, sort, from, to, company]);
 
   return (
     <>
@@ -56,12 +97,42 @@ export default function DashboardPage() {
 
         {/* Applications Table */}
         <div className="bg-white rounded-2xl border border-[#dbe0e6] shadow-sm overflow-hidden">
-          <div className="px-6 py-5 border-b border-[#dbe0e6] flex justify-between items-center bg-white">
+          <div className="px-6 py-5 border-b border-[#dbe0e6] flex flex-wrap gap-3 items-center bg-white justify-between">
             <h3 className="text-[#111418] text-xl font-bold">Application History</h3>
-            <div className="flex gap-2">
-              <button className="p-2 hover:bg-slate-50 rounded-lg text-[#617589] border border-[#dbe0e6] transition-colors flex items-center justify-center">
-                <span className="material-symbols-outlined text-xl">filter_list</span>
-              </button>
+            <div className="flex flex-wrap gap-2 items-center">
+              <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="h-9 px-3 border rounded-lg text-sm" />
+              <span className="text-[#617589] text-xs">to</span>
+              <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-9 px-3 border rounded-lg text-sm" />
+              <input type="text" value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Company" className="h-9 px-3 border rounded-lg text-sm" />
+              <select value={status} onChange={(e) => setStatus(e.target.value)} className="h-9 px-3 border rounded-lg text-sm">
+                <option value="">All Statuses</option>
+                <option value="applied">Applied</option>
+                <option value="shortlisted">Shortlisted</option>
+                <option value="hired">Hired</option>
+                <option value="rejected">Rejected</option>
+              </select>
+              <select value={sort} onChange={(e) => setSort(e.target.value)} className="h-9 px-3 border rounded-lg text-sm">
+                <option value="date_desc">Most Recent</option>
+                <option value="date_asc">Oldest</option>
+                <option value="company_asc">Company A→Z</option>
+                <option value="company_desc">Company Z→A</option>
+                <option value="role_asc">Role A→Z</option>
+                <option value="role_desc">Role Z→A</option>
+              </select>
+              <button
+                onClick={() => {
+                  setPage(1);
+                  router.push({ pathname: router.pathname, query: { page: 1, limit, status: status || undefined, sort, from: from || undefined, to: to || undefined, company: company || undefined } }, undefined, { shallow: true });
+                }}
+                className="px-4 h-9 rounded-lg bg-[#137fec] text-white text-xs font-bold"
+              >Apply</button>
+              <button
+                onClick={() => {
+                  setStatus(''); setSort('date_desc'); setFrom(''); setTo(''); setCompany(''); setPage(1);
+                  router.push({ pathname: router.pathname, query: { page: 1, limit } }, undefined, { shallow: true });
+                }}
+                className="px-4 h-9 rounded-lg border text-xs font-bold"
+              >Reset</button>
             </div>
           </div>
           
@@ -70,6 +141,7 @@ export default function DashboardPage() {
               <thead>
                 <tr className="bg-slate-50/50 border-b border-[#dbe0e6]">
                   <th className="px-6 py-4 text-[#617589] text-xs font-black uppercase tracking-wider">Company & Role</th>
+                  <th className="px-6 py-4 text-[#617589] text-xs font-black uppercase tracking-wider">Location</th>
                   <th className="px-6 py-4 text-[#617589] text-xs font-black uppercase tracking-wider">Status</th>
                   <th className="px-6 py-4 text-[#617589] text-xs font-black uppercase tracking-wider text-right">Action</th>
                 </tr>
@@ -89,6 +161,9 @@ export default function DashboardPage() {
                       </div>
                     </td>
                     <td className="px-6 py-5">
+                      <div className="text-[#617589] text-xs font-medium">{app.type}</div>
+                    </td>
+                    <td className="px-6 py-5">
                       <span className={`inline-flex items-center rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-tight ${app.statusColor}`}>
                         {app.status}
                       </span>
@@ -106,10 +181,27 @@ export default function DashboardPage() {
           
           {/* Pagination Footer */}
           <div className="px-6 py-4 bg-slate-50/50 border-t border-[#dbe0e6] flex justify-between items-center">
-             <p className="text-xs text-[#617589] font-bold">Showing 4 of 42 applications</p>
+             <p className="text-xs text-[#617589] font-bold">Page {page} of {Math.max(1, Math.ceil(total / limit))}</p>
              <div className="flex gap-2">
-                <button className="px-3 py-1 text-sm font-bold border border-[#dbe0e6] rounded-lg hover:bg-white transition-colors disabled:opacity-50">Prev</button>
-                <button className="px-3 py-1 text-sm font-bold border border-[#dbe0e6] rounded-lg hover:bg-white transition-colors">Next</button>
+                <button
+                  onClick={() => {
+                    const newPage = Math.max(1, page - 1);
+                    setPage(newPage);
+                    router.push({ pathname: router.pathname, query: { page: newPage, limit, status: status || undefined, sort, from: from || undefined, to: to || undefined } }, undefined, { shallow: true });
+                  }}
+                  disabled={page <= 1}
+                  className="px-3 py-1 text-sm font-bold border border-[#dbe0e6] rounded-lg hover:bg-white transition-colors disabled:opacity-50"
+                >Prev</button>
+                <button
+                  onClick={() => {
+                    const maxPage = Math.ceil(total / limit);
+                    const newPage = page < maxPage ? page + 1 : page;
+                    setPage(newPage);
+                    router.push({ pathname: router.pathname, query: { page: newPage, limit, status: status || undefined, sort, from: from || undefined, to: to || undefined } }, undefined, { shallow: true });
+                  }}
+                  disabled={page >= Math.ceil(total / limit)}
+                  className="px-3 py-1 text-sm font-bold border border-[#dbe0e6] rounded-lg hover:bg-white transition-colors disabled:opacity-50"
+                >Next</button>
              </div>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useRequireAuth } from '@/lib/requireAuth';
 import AdminSidebar from '../../components/admin/AdminSidebar';
 import OverviewContent from '../../components/admin/OverviewContent';
 import UserManagement from '../../components/admin/UserManagement';
@@ -6,6 +7,7 @@ import CompaniesContent from '../../components/admin/CompaniesContent';
 import SettingsContent from '../../components/admin/SettingsContent';
 
 const AdminPage = () => {
+  useRequireAuth('admin');
   // Tabs: 'overview' | 'users' | 'companies'
   const [activeTab, setActiveTab] = useState('overview');
 

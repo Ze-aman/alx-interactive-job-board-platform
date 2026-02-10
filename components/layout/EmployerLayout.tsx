@@ -10,6 +10,24 @@ interface EmployerLayoutProps {
 export const EmployerLayout = ({ children }: EmployerLayoutProps) => {
   const router = useRouter();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [company, setCompany] = useState<any>(null);
+
+  React.useEffect(() => {
+    if (router.query.profile === '1') {
+      setIsProfileOpen(true);
+    }
+  }, [router.query.profile]);
+
+  React.useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch('/api/profile/me');
+        const data = await res.json();
+        if (data?.role === 'employer') setCompany(data.profile);
+      } catch {}
+    };
+    load();
+  }, []);
 
   const navItems = [
     { icon: 'grid_view', label: 'Dashboard', href: '/employer' },
@@ -29,11 +47,15 @@ export const EmployerLayout = ({ children }: EmployerLayoutProps) => {
       {/* Sidebar - Fixed Position */}
       <aside className="w-64 bg-white border-r border-[#dbe0e6] flex flex-col fixed h-full z-20">
         <div className="p-6 flex items-center gap-3">
-          <div className="bg-[#137fec] size-10 rounded-lg flex items-center justify-center text-white shadow-lg shadow-[#137fec]/20">
-            <span className="material-symbols-outlined">corporate_fare</span>
-          </div>
+          {company?.logo_url ? (
+            <img src={company.logo_url} alt="Logo" className="size-10 rounded-lg object-cover border border-[#dbe0e6]" />
+          ) : (
+            <div className="bg-[#137fec] size-10 rounded-lg flex items-center justify-center text-white shadow-lg shadow-[#137fec]/20">
+              <span className="material-symbols-outlined">corporate_fare</span>
+            </div>
+          )}
           <div className="flex flex-col">
-            <h1 className="text-[#111418] text-base font-bold leading-tight">CorpTech Inc.</h1>
+            <h1 className="text-[#111418] text-base font-bold leading-tight">{company?.name || 'CorpTech Inc.'}</h1>
             <p className="text-[10px] text-[#617589] font-bold uppercase tracking-widest">Employer Hub</p>
           </div>
         </div>
@@ -103,7 +125,7 @@ export const EmployerLayout = ({ children }: EmployerLayoutProps) => {
               </div>
               <div 
                 className="size-10 rounded-full bg-cover bg-center border-2 border-transparent group-hover:border-[#137fec]/20 transition-all shadow-sm" 
-                style={{backgroundImage: `url('https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah')`}}
+                style={{backgroundImage: company?.logo_url ? `url('${company.logo_url}')` : `url('https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah')`}}
               ></div>
             </div>
           </div>

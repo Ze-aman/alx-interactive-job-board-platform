@@ -1,6 +1,29 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useJobs } from '@/hooks/useJobs';
 
 export const FilterSidebar = () => {
+  const { filters, setFilters } = useJobs();
+  const [locationInput, setLocationInput] = useState(filters.location || '');
+
+  const setCategory = (cat?: string) => {
+    setFilters({ ...filters, category: cat, page: 1 });
+  };
+
+  const setExperience = (exp?: 'entry' | 'mid' | 'senior') => {
+    setFilters({ ...filters, experience: exp, page: 1 });
+  };
+
+  const applyLocation = (loc?: string) => {
+    setFilters({ ...filters, location: loc || undefined, page: 1 });
+  };
+
+  const clearAll = () => {
+    setFilters({});
+    setLocationInput('');
+  };
+
+  const categories = ['Engineering', 'Design', 'Marketing', 'Sales'];
+
   return (
     <aside className="w-full md:w-72 flex-shrink-0">
       <div className="bg-white rounded-2xl border border-[#f0f2f4] p-7 sticky top-24 shadow-sm">
@@ -8,16 +31,22 @@ export const FilterSidebar = () => {
           <h3 className="text-lg font-bold flex items-center gap-2 text-[#111418]">
             <span className="material-symbols-outlined text-[#137fec]">tune</span> Filters
           </h3>
-          <button className="text-xs font-bold text-[#137fec] hover:underline">Clear All</button>
+          <button onClick={clearAll} className="text-xs font-bold text-[#137fec] hover:underline">Clear All</button>
         </div>
 
         <div className="space-y-10">
           <div>
             <h4 className="text-[11px] font-black uppercase tracking-[0.1em] text-[#94a3b8] mb-5">Category</h4>
-            <div className="space-y-4">
-              {['Development (42)', 'Design (18)', 'Marketing (12)', 'Sales (8)'].map((cat) => (
+            <div className="space-y-3">
+              {categories.map((cat) => (
                 <label key={cat} className="flex items-center gap-3 cursor-pointer group">
-                  <input type="checkbox" className="rounded-md border-[#cbd5e1] text-[#137fec] focus:ring-[#137fec] h-5 w-5" />
+                  <input
+                    type="radio"
+                    name="category"
+                    checked={filters.category === cat}
+                    onChange={() => setCategory(filters.category === cat ? undefined : cat)}
+                    className="rounded-md border-[#cbd5e1] text-[#137fec] focus:ring-[#137fec] h-5 w-5"
+                  />
                   <span className="text-sm font-semibold text-[#475569] group-hover:text-[#137fec]">{cat}</span>
                 </label>
               ))}
@@ -25,21 +54,40 @@ export const FilterSidebar = () => {
           </div>
 
           <div>
-            <h4 className="text-[11px] font-black uppercase tracking-[0.1em] text-[#94a3b8] mb-5">Job Type</h4>
-            <div className="flex flex-wrap gap-2">
-              {['Full-time', 'Contract', 'Remote'].map(type => (
-                <button key={type} className={`px-4 py-2 rounded-full text-xs font-bold border transition-all ${type === 'Full-time' ? 'bg-[#eff6ff] border-[#137fec] text-[#137fec]' : 'border-[#f0f2f4] text-[#617589]'}`}>
-                  {type}
-                </button>
-              ))}
+            <h4 className="text-[11px] font-black uppercase tracking-[0.1em] text-[#94a3b8] mb-5">Location</h4>
+            <div className="flex gap-2">
+              <input
+                value={locationInput}
+                onChange={(e) => setLocationInput(e.target.value)}
+                onBlur={() => applyLocation(locationInput.trim() || undefined)}
+                placeholder="City, Country or Remote"
+                className="flex-1 h-10 px-3 rounded-lg border border-[#cfdbe7] text-sm outline-none"
+              />
+              <button
+                onClick={() => applyLocation(locationInput.trim() || undefined)}
+                className="px-4 py-2 rounded-lg bg-[#137fec] text-white text-xs font-bold"
+              >Apply</button>
             </div>
           </div>
 
           <div>
-            <h4 className="text-[11px] font-black uppercase tracking-[0.1em] text-[#94a3b8] mb-5">Salary Range</h4>
-            <input type="range" className="w-full h-1.5 bg-[#f1f5f9] rounded-lg appearance-none cursor-pointer accent-[#137fec]" />
-            <div className="flex justify-between mt-3 text-[11px] font-bold text-[#94a3b8]">
-              <span>$50k</span><span>$200k+</span>
+            <h4 className="text-[11px] font-black uppercase tracking-[0.1em] text-[#94a3b8] mb-5">Experience Level</h4>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { label: 'Entry-Level', value: 'entry' },
+                { label: 'Mid-Level', value: 'mid' },
+                { label: 'Senior', value: 'senior' },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setExperience(filters.experience === (opt.value as any) ? undefined : (opt.value as any))}
+                  className={`px-4 py-2 rounded-full text-xs font-bold border transition-all ${
+                    filters.experience === opt.value ? 'bg-[#eff6ff] border-[#137fec] text-[#137fec]' : 'border-[#f0f2f4] text-[#617589]'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
             </div>
           </div>
         </div>

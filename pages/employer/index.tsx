@@ -1,15 +1,124 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { EmployerLayout } from '@/components/layout/EmployerLayout';
 import { PostJobModal } from '@/components/modals/PostJobModal';
+import { apiClient } from '@/lib/apiClient';
+import { useRequireAuth } from '@/lib/requireAuth';
 
-const ActiveJobs = [
-  { id: 1, title: 'Senior Frontend Developer', dept: 'Engineering', type: 'Full-time', stage: 'Interviewing', progress: 65, applicants: 24, news: 4, color: 'bg-[#137fec]' },
-  { id: 2, title: 'Product Designer (UI/UX)', dept: 'Design', type: 'Remote', stage: 'Screening', progress: 30, applicants: 12, news: 2, color: 'bg-orange-400' },
-  { id: 3, title: 'DevOps Engineer', dept: 'Engineering', type: 'Hybrid', stage: 'Offering', progress: 90, applicants: 8, news: 0, color: 'bg-green-500' },
-];
+type Job = {
+  id: number;
+  title: string;
+  dept: string;
+  type: string;
+  // These are placeholders for now, we will add them to the API later
+  stage: string;
+  progress: number;
+  applicants: number;
+  news: number;
+  color: string;
+  description_html?: string;
+  requirements?: string[];
+  benefits?: string[];
+};
 
 export default function EmployerDashboard() {
+  useRequireAuth('employer');
   const [isPostJobOpen, setIsPostJobOpen] = useState(false);
+  const [jobToEdit, setJobToEdit] = useState<Job | undefined>(undefined);
+  const [jobToDelete, setJobToDelete] = useState<number | null>(null);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [openPositions, setOpenPositions] = useState(0);
+  const [newAppsCount, setNewAppsCount] = useState(0);
+  const [newAppsTrend, setNewAppsTrend] = useState<string>('');
+  const [interviewsCount, setInterviewsCount] = useState(0);
+  const [interviewsTrend, setInterviewsTrend] = useState<string>('');
+  const [recentApplicants, setRecentApplicants] = useState<{ name: string; role: string; time: string; img: string }[]>([]);
+
+  const refreshJobs = async () => {
+    setLoading(true);
+    try {
+      const res = await apiClient('/api/employer/jobs');
+      setJobs(res.data || []);
+    } catch (error) {
+      console.error('Failed to fetch jobs', error);
+    }
+    setLoading(false);
+  };
+
+  const handleEdit = async (job: Job) => {
+    try {
+      // Fetch full job details including description, requirements, and benefits
+      const fullJobDetails = await apiClient(`/api/jobs/${job.id}`);
+      setJobToEdit({
+        ...job,
+        description_html: fullJobDetails.description_html,
+        requirements: fullJobDetails.requirements,
+        benefits: fullJobDetails.benefits
+      });
+      setIsPostJobOpen(true);
+    } catch (error) {
+      console.error('Failed to fetch job details for editing:', error);
+      alert('Failed to load job details for editing. Please try again.');
+    }
+  };
+
+  const handleDelete = (id: number) => {
+    if (window.confirm('Are you sure you want to delete this job?')) {
+      setJobToDelete(id);
+    }
+  };
+
+  useEffect(() => {
+    const deleteJob = async () => {
+      if (!jobToDelete) return;
+      try {
+        await apiClient(`/api/employer/jobs/${jobToDelete}`, { method: 'DELETE' });
+        await refreshJobs();
+      } catch (error) {
+        console.error('Failed to delete job', error);
+        alert('Failed to delete job. Please try again.');
+      } finally {
+        setJobToDelete(null);
+      }
+    };
+    deleteJob();
+  }, [jobToDelete]);
+
+  useEffect(() => {
+    refreshJobs();
+  }, []);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const s = await apiClient('/api/employer/stats');
+        setOpenPositions(s.openPositions || 0);
+        const ap = s.newApplications || {};
+        const it = s.interviewsScheduled || {};
+        setNewAppsCount(ap.count || 0);
+        setInterviewsCount(it.count || 0);
+        setNewAppsTrend(typeof ap.trendPct === 'number' ? `${ap.trendPct > 0 ? '+' : ''}${ap.trendPct}%` : '');
+        setInterviewsTrend(typeof it.trendPct === 'number' ? `${it.trendPct > 0 ? '+' : ''}${it.trendPct}%` : '');
+      } catch (e) {}
+    };
+    fetchStats();
+  }, []);
+
+  useEffect(() => {
+    const loadRecent = async () => {
+      try {
+        const res = await apiClient('/api/employer/recent-applicants');
+        const items = (res.data || []).map((r: any) => {
+          const dt = new Date(r.applied_at);
+          const diffMin = Math.max(0, Math.round((Date.now() - dt.getTime()) / 60000));
+          const time = diffMin < 60 ? `${diffMin}m ago` : `${Math.round(diffMin / 60)}h ago`;
+          return { name: r.name, role: r.role, time, img: r.img };
+        });
+        setRecentApplicants(items);
+      } catch (e) {}
+    };
+    loadRecent();
+  }, []);
 
   return (
     <EmployerLayout>
@@ -30,9 +139,9 @@ export default function EmployerDashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <StatCard title="Open Positions" value="12" trend="+2%" icon="work" color="text-blue-600" bgColor="bg-blue-50" />
-        <StatCard title="New Applications" value="48" trend="+15%" icon="person_add" color="text-purple-600" bgColor="bg-purple-50" />
-        <StatCard title="Interviews Scheduled" value="06" trend="-5%" icon="event" color="text-orange-600" bgColor="bg-orange-50" isDown />
+        <StatCard title="Open Positions" value={String(openPositions)} trend={newAppsTrend ? '' : ''} icon="work" color="text-blue-600" bgColor="bg-blue-50" />
+        <StatCard title="New Applications" value={String(newAppsCount)} trend={newAppsTrend} icon="person_add" color="text-purple-600" bgColor="bg-purple-50" isDown={newAppsTrend.startsWith('-')} />
+        <StatCard title="Interviews Scheduled" value={String(interviewsCount)} trend={interviewsTrend} icon="event" color="text-orange-600" bgColor="bg-orange-50" isDown={interviewsTrend.startsWith('-')} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -50,42 +159,63 @@ export default function EmployerDashboard() {
                   <th className="px-6 py-4 text-xs font-bold text-[#617589] uppercase">Job Title & Dept</th>
                   <th className="px-6 py-4 text-xs font-bold text-[#617589] uppercase">Hiring Stage</th>
                   <th className="px-6 py-4 text-xs font-bold text-[#617589] uppercase text-center">Applicants</th>
-                  <th className="px-6 py-4"></th>
+                  <th className="px-6 py-4 text-xs font-bold text-[#617589] uppercase text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {ActiveJobs.map((job) => (
-                  <tr key={job.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-5">
-                      <p className="font-bold text-[#111418]">{job.title}</p>
-                      <p className="text-xs text-[#617589]">{job.dept} • {job.type}</p>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="w-full max-w-xs">
-                        <div className="flex justify-between mb-1.5">
-                          <span className="text-[10px] font-bold text-[#137fec] uppercase">{job.stage}</span>
-                          <span className="text-[10px] font-bold text-[#617589]">{job.progress}% Complete</span>
-                        </div>
-                        <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                          <div className={`${job.color} h-full rounded-full`} style={{ width: `${job.progress}%` }}></div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <span className="font-bold text-[#111418]">{job.applicants}</span>
-                        {job.news > 0 && (
-                          <span className="px-2 py-0.5 bg-[#137fec]/10 text-[#137fec] text-[10px] font-bold rounded-full">+{job.news} new</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-5 text-right">
-                      <button className="text-[#617589] hover:text-[#111418]">
-                        <span className="material-symbols-outlined">more_vert</span>
-                      </button>
-                    </td>
+                {loading ? (
+                  <tr>
+                    <td colSpan={4} className="text-center p-8 text-gray-500">Loading jobs...</td>
                   </tr>
-                ))}
+                ) : jobs.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="text-center p-8 text-gray-500">No active jobs found.</td>
+                  </tr>
+                ) : (
+                  jobs.map((job) => (
+                    <tr key={job.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-6 py-5">
+                        <p className="font-bold text-[#111418]">{job.title}</p>
+                        <p className="text-xs text-[#617589]">{job.dept} • {job.type}</p>
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="w-full max-w-xs">
+                          <div className="flex justify-between mb-1.5">
+                            <span className="text-[10px] font-bold text-[#137fec] uppercase">{job.stage}</span>
+                            <span className="text-[10px] font-bold text-[#617589]">{job.progress}% Complete</span>
+                          </div>
+                          <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                            <div className={`${job.color} h-full rounded-full`} style={{ width: `${job.progress}%` }}></div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <span className="font-bold text-[#111418]">{job.applicants}</span>
+                          {job.news > 0 && (
+                            <span className="px-2 py-0.5 bg-[#137fec]/10 text-[#137fec] text-[10px] font-bold rounded-full">+{job.news} new</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-5 text-right">
+                        <div className="flex items-center justify-end">
+          <button
+            onClick={() => handleEdit(job)}
+            className="p-2 text-[#617589] hover:text-[#137fec] hover:bg-slate-100 rounded-md"
+          >
+                            <span className="material-symbols-outlined text-lg">edit</span>
+                          </button>
+          <button
+            onClick={() => handleDelete(job.id)}
+            className="p-2 text-[#617589] hover:text-red-500 hover:bg-red-50 rounded-md"
+          >
+                            <span className="material-symbols-outlined text-lg">delete</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -95,8 +225,9 @@ export default function EmployerDashboard() {
         <div className="space-y-6">
            <h3 className="text-xl font-bold text-[#111418]">Recent Applicants</h3>
            <div className="bg-white rounded-xl border border-[#dbe0e6] shadow-sm p-4 space-y-4">
-              <ApplicantItem name="David Miller" role="Frontend Developer" time="2m ago" img="5" />
-              <ApplicantItem name="Emma Watson" role="UX Designer" time="45m ago" img="6" />
+              {recentApplicants.map((a) => (
+                <ApplicantItem key={`${a.img}-${a.time}`} name={a.name} role={a.role} time={a.time} img={a.img} />
+              ))}
               <button className="w-full py-3 text-xs font-bold text-[#617589] bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors">
                 Load More Applicants
               </button>
@@ -105,9 +236,14 @@ export default function EmployerDashboard() {
       </div>
 
       {/* Post Job Modal Component */}
-      <PostJobModal 
-        isOpen={isPostJobOpen} 
-        onClose={() => setIsPostJobOpen(false)} 
+      <PostJobModal
+        isOpen={isPostJobOpen}
+        onClose={() => {
+          setIsPostJobOpen(false);
+          setJobToEdit(undefined);
+        }}
+        onCreated={refreshJobs}
+        jobToEdit={jobToEdit}
       />
     </EmployerLayout>
   );

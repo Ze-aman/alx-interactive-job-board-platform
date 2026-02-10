@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { ProfileModal } from '../modals/ProfileModal'; // Adjust this path to where your modal file is
+import { ProfileModal } from '../modals/ProfileModal';
+import { apiClient } from '@/lib/apiClient';
+import { useAuth } from '@/hooks/useAuth';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -9,7 +11,19 @@ interface DashboardLayoutProps {
 
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const router = useRouter();
+  const { logout } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [profile, setProfile] = useState<{ full_name?: string; email?: string; location?: string; title?: string; bio?: string; phone?: string; experiences?: { title?: string; company?: string; start_date?: string; end_date?: string; description?: string }[] } | undefined>(undefined);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const data = await apiClient('/api/profile/me');
+        if (data.role === 'candidate') setProfile(data.profile);
+      } catch {}
+    };
+    load();
+  }, []);
 
   // Standard navigation links (excluding Profile since it's now a modal)
   const navItems = [
@@ -52,7 +66,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           </button>
           <div 
             className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border-2 border-[#137fec]/20 cursor-pointer hover:opacity-80 transition-opacity" 
-            style={{backgroundImage: `url('https://api.dicebear.com/7.x/avataaars/svg?seed=Alex')`}}
+            style={{backgroundImage: `url('https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(profile?.full_name || 'User')}')`}}
             onClick={() => setIsProfileOpen(true)}
           />
         </div>
@@ -67,11 +81,11 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               <div className="flex items-center gap-3 px-2 py-4">
                 <div 
                   className="bg-slate-200 rounded-full size-12 flex-shrink-0 bg-cover bg-center border border-[#dbe0e6]" 
-                  style={{backgroundImage: `url('https://api.dicebear.com/7.x/avataaars/svg?seed=Alex')`}}
+                  style={{backgroundImage: `url('https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(profile?.full_name || 'User')}')`}}
                 ></div>
                 <div className="flex flex-col overflow-hidden">
-                  <h1 className="text-[#111418] text-base font-bold truncate">Alex Smith</h1>
-                  <p className="text-[#617589] text-xs font-medium truncate">Senior Product Designer</p>
+                  <h1 className="text-[#111418] text-base font-bold truncate">{profile?.full_name || '—'}</h1>
+                  <p className="text-[#617589] text-xs font-medium truncate">{profile?.title || '—'}</p>
                 </div>
               </div>
 
@@ -116,7 +130,10 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             </div>
 
             <div className="pt-4 border-t border-[#dbe0e6]">
-              <button className="flex items-center gap-3 px-3 py-3 w-full rounded-lg text-red-500 hover:bg-red-50 transition-colors">
+              <button
+                onClick={async () => { try { await apiClient('/api/auth/logout', { method: 'POST' }); } catch {} logout(); }}
+                className="flex items-center gap-3 px-3 py-3 w-full rounded-lg text-red-500 hover:bg-red-50 transition-colors"
+              >
                 <span className="material-symbols-outlined">logout</span>
                 <p className="text-sm font-bold">Sign Out</p>
               </button>
@@ -135,6 +152,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       {/* Profile Modal - Managed globally by the layout */}
       <ProfileModal 
         isOpen={isProfileOpen} 
+        profile={profile}
         onClose={() => setIsProfileOpen(false)} 
       />
     </div>

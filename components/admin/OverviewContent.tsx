@@ -1,7 +1,34 @@
-import React from 'react';
-import StatCard from './StatCard'; // Ensure this matches your file path
+import React, { useEffect, useState } from 'react';
+import StatCard from './StatCard';
+import { apiClient } from '@/lib/apiClient';
 
 const OverviewContent = () => {
+  const [stats, setStats] = useState<{ totalUsers: number; activeJobs: number; pendingApprovals: number } | null>(null);
+  const [apps, setApps] = useState<Array<{ id: number; applicant: string; jobTitle: string; status: string }>>([]);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await apiClient('/api/admin/overview');
+        setStats(res.stats);
+        setApps(res.recentApplications || []);
+      } catch {
+        try {
+          const emp = await apiClient('/api/employer/stats');
+          const comps = await apiClient('/api/companies');
+          setStats({
+            totalUsers: NaN,
+            activeJobs: emp.openPositions ?? NaN,
+            pendingApprovals: Array.isArray(comps) ? comps.filter((c: any) => !c.verified).length : NaN,
+          } as any);
+          const recent = await apiClient('/api/employer/recent-applicants');
+          setApps((recent.data || []).map((r: any) => ({ id: r.id, applicant: r.name, jobTitle: r.role, status: 'applied' })));
+        } catch {}
+      }
+    };
+    load();
+  }, []);
+
   return (
     <div className="animate-in fade-in duration-500">
       <div className="mb-8">
@@ -11,15 +38,9 @@ const OverviewContent = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <StatCard label="Total Users" value="12,450" trend="12%" icon="person" />
-        <StatCard label="Active Jobs" value="842" trend="5%" icon="work" />
-        <StatCard 
-          label="Pending Approvals" 
-          value="34" 
-          trend="Priority" 
-          icon="pending_actions" 
-          isPriority 
-        />
+        <StatCard label="Total Users" value={String(stats?.totalUsers ?? '—')} trend="" icon="person" />
+        <StatCard label="Active Jobs" value={String(stats?.activeJobs ?? '—')} trend="" icon="work" />
+        <StatCard label="Pending Approvals" value={String(stats?.pendingApprovals ?? '—')} trend="Priority" icon="pending_actions" isPriority />
       </div>
 
       {/* Recent Applications Table */}
@@ -42,24 +63,27 @@ const OverviewContent = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#dbe0e6]">
-              {/* Sample Row */}
-              <tr className="hover:bg-[#f0f2f4]/50 transition-colors">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center gap-3">
-                    <div className="size-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold">JD</div>
-                    <span className="text-sm font-semibold text-[#111418]">Jane Doe</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-sm text-[#617589]">Senior Software Engineer</td>
-                <td className="px-6 py-4">
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700">
-                    Pending
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-right">
-                   <button className="text-[#137fec] font-bold text-sm">View</button>
-                </td>
-              </tr>
+              {apps.map(a => (
+                <tr key={a.id} className="hover:bg-[#f0f2f4]/50 transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-3">
+                      <div className="size-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold">
+                        {a.applicant?.charAt(0) || '?'}
+                      </div>
+                      <span className="text-sm font-semibold text-[#111418]">{a.applicant}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-[#617589]">{a.jobTitle}</td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${a.status === 'applied' ? 'bg-blue-100 text-blue-700' : a.status === 'shortlisted' ? 'bg-amber-100 text-amber-700' : a.status === 'hired' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                      {a.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <button className="text-[#137fec] font-bold text-sm">View</button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

@@ -1,11 +1,20 @@
 import React from 'react';
+import { useRouter } from 'next/router';
+import { format } from 'date-fns';
 
 interface ProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
+  profile?: { full_name?: string; email?: string; location?: string; title?: string; bio?: string; phone?: string; profile_picture_url?: string; experiences?: { title?: string; company?: string; start_date?: string; end_date?: string; description?: string }[] };
 }
 
-export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
+export const ProfileModal = ({ isOpen, onClose, profile }: ProfileModalProps) => {
+  const router = useRouter();
+  const [uploading, setUploading] = React.useState(false);
+  const [picUrl, setPicUrl] = React.useState<string | undefined>(profile?.profile_picture_url);
+  const fileRef = React.useRef<HTMLInputElement>(null);
+  const fallback = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(profile?.full_name || 'Alex')}`;
+  const currentPic = picUrl || fallback;
   if (!isOpen) return null;
 
   return (
@@ -31,11 +40,41 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
             <div className="absolute -bottom-16 left-8">
               <div 
                 className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-32 border-4 border-white shadow-lg" 
-                style={{backgroundImage: `url('https://api.dicebear.com/7.x/avataaars/svg?seed=Alex')`}}
+                style={{backgroundImage: `url('${currentPic}')`}}
+              />
+              <button
+                onClick={() => fileRef.current?.click()}
+                className="mt-2 bg-white/90 hover:bg-white text-gray-800 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm"
+                disabled={uploading}
+              >
+                {uploading ? 'Uploading...' : 'Change Photo'}
+              </button>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  setUploading(true);
+                  try {
+                    const reader = new FileReader();
+                    const base64 = await new Promise<string>((resolve, reject) => {
+                      reader.onload = () => resolve(String(reader.result));
+                      reader.onerror = reject as any;
+                      reader.readAsDataURL(file);
+                    });
+                    const { apiClient } = await import('@/lib/apiClient');
+                    const res = await apiClient('/api/profile/picture', { method: 'POST', body: JSON.stringify({ image_base64: base64 }) });
+                    setPicUrl(res.profile_picture_url);
+                  } catch {}
+                  setUploading(false);
+                }}
               />
             </div>
             <div className="absolute top-4 right-14">
-              <button className="bg-white/90 hover:bg-white text-gray-800 px-4 py-2 rounded-lg font-bold text-sm transition-all flex items-center gap-2 shadow-sm">
+              <button onClick={() => router.push('/settings')} className="bg-white/90 hover:bg-white text-gray-800 px-4 py-2 rounded-lg font-bold text-sm transition-all flex items-center gap-2 shadow-sm">
                 <span className="material-symbols-outlined text-base">edit</span>
                 Edit Profile
               </button>
@@ -45,8 +84,8 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
           {/* Identity Section */}
           <div className="mt-20 px-8 flex justify-between items-start">
             <div>
-              <h1 className="text-3xl font-black text-[#111418]">Alex Smith</h1>
-              <p className="text-lg text-[#137fec] font-semibold">Senior Product Designer</p>
+              <h1 className="text-3xl font-black text-[#111418]">{profile?.full_name || 'Alex Smith'}</h1>
+              <p className="text-lg text-[#137fec] font-semibold">{profile?.title || '—'}</p>
             </div>
             <div className="flex gap-2">
               <button className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
@@ -64,15 +103,31 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
               <section>
                 <h3 className="text-lg font-bold text-[#111418] mb-3 border-b border-gray-100 pb-2">Professional Summary</h3>
                 <p className="text-[#617589] leading-relaxed">
-                  A results-driven Senior Product Designer with over 8 years of experience in creating user-centered digital products. Proven track record of leading design systems and cross-functional teams.
+                  {profile?.bio || '—'}
                 </p>
               </section>
 
               <section>
                 <h3 className="text-lg font-bold text-[#111418] mb-4 border-b border-gray-100 pb-2">Experience</h3>
                 <div className="space-y-6">
-                  <ExperienceItem title="Principal Designer" company="Creative Studio" date="2021 - Present" icon="corporate_fare" />
-                  <ExperienceItem title="UI/UX Designer" company="Tech Innovations" date="2018 - 2021" icon="layers" />
+                  {profile?.experiences?.length ? (
+                    profile.experiences.map((exp: any, idx: number) => {
+                      const startDate = exp.start_date ? format(new Date(exp.start_date), 'MMMM d, yyyy') : '';
+                      const endDate = exp.end_date ? format(new Date(exp.end_date), 'MMMM d, yyyy') : '';
+                      const dateStr = `${startDate}${endDate ? ' - ' + endDate : ''}`;
+                      return (
+                        <ExperienceItem 
+                          key={idx}
+                          title={exp.title}
+                          company={exp.company}
+                          date={dateStr}
+                          icon="work"
+                        />
+                      );
+                    })
+                  ) : (
+                    <p className="text-[#617589]">—</p>
+                  )}
                 </div>
               </section>
             </div>
@@ -81,8 +136,9 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
               <div className="bg-[#f6f7f8] p-6 rounded-xl border border-gray-100">
                 <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Contact</h3>
                 <div className="space-y-4">
-                  <ContactItem icon="mail" text="alex.smith@example.com" />
-                  <ContactItem icon="location_on" text="San Francisco, CA" />
+                  <ContactItem icon="mail" text={profile?.email || '—'} />
+                  <ContactItem icon="location_on" text={profile?.location || '—'} />
+                  <ContactItem icon="call" text={profile?.phone || '—'} />
                 </div>
               </div>
             </aside>

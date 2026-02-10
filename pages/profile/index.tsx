@@ -1,9 +1,28 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { ProfileModal } from '@/components/modals/ProfileModal';
+import { apiClient } from '@/lib/apiClient';
 
 export default function MyProfile() {
+  const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [profile, setProfile] = useState<{ full_name?: string; email?: string; location?: string; title?: string; bio?: string; phone?: string; profile_picture_url?: string; experiences?: { title?: string; company?: string; start_date?: string; end_date?: string; description?: string }[] } | undefined>(undefined);
+
+  useEffect(() => {
+    if (router.query.preview === '1') {
+      setIsModalOpen(true);
+    }
+    const load = async () => {
+      try {
+        const data = await apiClient('/api/profile/me');
+        if (data.role === 'candidate') setProfile(data.profile);
+      } catch {}
+    };
+    load();
+  }, [router.query.preview]);
+
+  const avatarUrl = profile?.profile_picture_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(profile?.full_name || 'User')}`;
 
   return (
     <DashboardLayout>
@@ -18,11 +37,11 @@ export default function MyProfile() {
           <div className="p-8 flex items-center gap-6">
             <div 
               className="size-24 rounded-full bg-cover bg-center border-4 border-[#137fec]/10" 
-              style={{backgroundImage: `url('https://api.dicebear.com/7.x/avataaars/svg?seed=Alex')`}}
+              style={{backgroundImage: `url('${avatarUrl}')`}}
             />
             <div className="flex-1">
-              <h3 className="text-2xl font-bold text-[#111418]">Alex Smith</h3>
-              <p className="text-[#137fec] font-medium">Senior Product Designer</p>
+              <h3 className="text-2xl font-bold text-[#111418]">{profile?.full_name || '—'}</h3>
+              <p className="text-[#137fec] font-medium">{profile?.title || '—'}</p>
               <div className="flex gap-4 mt-3">
                 <button 
                   onClick={() => setIsModalOpen(true)}
@@ -40,6 +59,7 @@ export default function MyProfile() {
       {/* The extracted Modal */}
       <ProfileModal 
         isOpen={isModalOpen} 
+        profile={profile}
         onClose={() => setIsModalOpen(false)} 
       />
     </DashboardLayout>

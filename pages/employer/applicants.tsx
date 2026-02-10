@@ -1,15 +1,63 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { EmployerLayout } from '@/components/layout/EmployerLayout';
+import { apiClient } from '@/lib/apiClient';
+import { useRequireAuth } from '@/lib/requireAuth';
 
-const ApplicantsData = [
-  { id: 1, name: 'David Miller', role: 'Senior Frontend Developer', stage: 'Interview', status: 'Upcoming', email: 'david.m@example.com', appliedDate: '2 hours ago', img: '5' },
-  { id: 2, name: 'Emma Watson', role: 'Product Designer', stage: 'Screening', status: 'Pending', email: 'e.watson@design.co', appliedDate: '45 mins ago', img: '6' },
-  { id: 3, name: 'James Wilson', role: 'DevOps Engineer', stage: 'Offer', status: 'Sent', email: 'j.wilson@tech.io', appliedDate: '1 day ago', img: '8' },
-  { id: 4, name: 'Sophia Chen', role: 'Senior Frontend Developer', stage: 'Technical Test', status: 'In Progress', email: 'chen.s@dev.com', appliedDate: '3 days ago', img: '12' },
-];
+const statusLabel = (status: string) => {
+  if (status === 'shortlisted') return 'Upcoming';
+  if (status === 'hired') return 'Sent';
+  if (status === 'rejected') return 'In Progress';
+  return 'Pending';
+};
+
+const timeAgo = (ts: string) => {
+  try {
+    const d = new Date(ts);
+    const diff = Math.floor((Date.now() - d.getTime()) / 1000);
+    if (diff < 60) return `${diff}s ago`;
+    if (diff < 3600) return `${Math.floor(diff/60)} mins ago`;
+    if (diff < 86400) return `${Math.floor(diff/3600)} hours ago`;
+    return `${Math.floor(diff/86400)} days ago`;
+  } catch {
+    return '';
+  }
+};
 
 export default function ApplicantsPage() {
+  useRequireAuth('employer');
   const [filterStage, setFilterStage] = useState('All Stages');
+  const [search, setSearch] = useState('');
+  const [jobFilter, setJobFilter] = useState<string>('');
+  const [jobs, setJobs] = useState<any[]>([]);
+  const [apps, setApps] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const loadJobs = async () => {
+      try {
+        const res = await apiClient('/api/employer/jobs');
+        setJobs(res.data || []);
+      } catch {}
+    };
+    loadJobs();
+  }, []);
+
+  useEffect(() => {
+    const loadApplicants = async () => {
+      setLoading(true);
+      try {
+        const params: string[] = [];
+        if (search) params.push(`q=${encodeURIComponent(search)}`);
+        if (jobFilter) params.push(`job_id=${jobFilter}`);
+        const stageMap: Record<string,string> = { Screening: 'Screening', Interview: 'Interview', 'Technical Test': 'Technical Test', Offer: 'Offer' };
+        if (filterStage !== 'All Stages') params.push(`stage=${encodeURIComponent(stageMap[filterStage] || filterStage)}`);
+        const res = await apiClient(`/api/employer/applicants${params.length ? `?${params.join('&')}` : ''}`);
+        setApps(res.data || []);
+      } catch {}
+      setLoading(false);
+    };
+    loadApplicants();
+  }, [search, jobFilter, filterStage]);
 
   return (
     <EmployerLayout>
@@ -36,6 +84,8 @@ export default function ApplicantsPage() {
               type="text" 
               placeholder="Search by name, role, or email..." 
               className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-[#dbe0e6] rounded-lg text-sm focus:ring-2 focus:ring-[#137fec]/20 outline-none transition-all"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
             />
           </div>
           
@@ -52,11 +102,11 @@ export default function ApplicantsPage() {
               <option>Offer</option>
             </select>
             
-            <select className="px-4 py-2.5 bg-slate-50 border border-[#dbe0e6] rounded-lg text-sm font-bold text-[#111418] outline-none">
-              <option>All Jobs</option>
-              <option>Senior Frontend Developer</option>
-              <option>Product Designer</option>
-              <option>DevOps Engineer</option>
+            <select className="px-4 py-2.5 bg-slate-50 border border-[#dbe0e6] rounded-lg text-sm font-bold text-[#111418] outline-none" value={jobFilter} onChange={(e) => setJobFilter(e.target.value)}>
+              <option value="">All Jobs</option>
+              {jobs.map((j) => (
+                <option key={j.id} value={j.id}>{j.title}</option>
+              ))}
             </select>
           </div>
         </div>
@@ -74,7 +124,7 @@ export default function ApplicantsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {ApplicantsData.map((applicant) => (
+              {(loading ? [] : apps).map((applicant) => (
                 <tr key={applicant.id} className="hover:bg-slate-50 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -87,7 +137,7 @@ export default function ApplicantsPage() {
                   </td>
                   <td className="px-6 py-4">
                     <p className="text-sm font-semibold text-[#111418]">{applicant.role}</p>
-                    <p className="text-[10px] text-[#617589] font-bold uppercase">{applicant.appliedDate}</p>
+                    <p className="text-[10px] text-[#617589] font-bold uppercase">{timeAgo(applicant.applied_at)}</p>
                   </td>
                   <td className="px-6 py-4">
                     <span className="px-3 py-1 bg-slate-100 text-slate-700 rounded-full text-xs font-bold">
@@ -97,10 +147,10 @@ export default function ApplicantsPage() {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <div className={`size-2 rounded-full ${
-                        applicant.status === 'Sent' ? 'bg-green-500' : 
-                        applicant.status === 'Upcoming' ? 'bg-[#137fec]' : 'bg-orange-400'
+                        applicant.status === 'hired' ? 'bg-green-500' : 
+                        applicant.status === 'shortlisted' ? 'bg-[#137fec]' : 'bg-orange-400'
                       }`} />
-                      <span className="text-xs font-bold text-[#111418]">{applicant.status}</span>
+                      <span className="text-xs font-bold text-[#111418]">{statusLabel(applicant.status)}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4 text-right">

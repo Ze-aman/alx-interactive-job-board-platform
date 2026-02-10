@@ -1,8 +1,25 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { apiClient } from '@/lib/apiClient';
 
 const CompaniesContent = () => {
-  // State to control modal visibility
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [companies, setCompanies] = useState<any[]>([]);
+  const [search, setSearch] = useState('');
+  const [newName, setNewName] = useState('');
+  const [newIndustry, setNewIndustry] = useState('Software & Tech');
+  const [newLocation, setNewLocation] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const refresh = async () => {
+    try {
+      const res = await apiClient('/api/companies');
+      setCompanies(res || []);
+    } catch {}
+  };
+
+  useEffect(() => {
+    refresh();
+  }, []);
 
   return (
     <div className="animate-in fade-in duration-500 space-y-6">
@@ -23,9 +40,9 @@ const CompaniesContent = () => {
 
       {/* Stats Mini-Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatMiniCard icon="corporate_fare" label="Total Partners" value="128" color="blue" />
-        <StatMiniCard icon="verified" label="Verified" value="112" color="green" />
-        <StatMiniCard icon="pending" label="Pending Review" value="16" color="yellow" />
+        <StatMiniCard icon="corporate_fare" label="Total Partners" value={String(companies.length)} color="blue" />
+        <StatMiniCard icon="verified" label="Verified" value={String(companies.filter(c => !!c.verified).length)} color="green" />
+        <StatMiniCard icon="pending" label="Pending Review" value={String(companies.filter(c => !c.verified).length)} color="yellow" />
       </div>
 
       {/* Search and Table */}
@@ -36,6 +53,8 @@ const CompaniesContent = () => {
             <input 
               className="w-full bg-[#f0f2f4] border-none rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-[#137fec]/20 outline-none" 
               placeholder="Search companies..." 
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
             />
           </div>
         </div>
@@ -51,9 +70,24 @@ const CompaniesContent = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#f0f2f4]">
-              <CompanyRow name="TechCorp" industry="Software" jobs={12} status="Verified" logo="TC" />
-              <CompanyRow name="GreenEnergy" industry="Renewables" jobs={4} status="Pending" logo="GE" />
-              <CompanyRow name="ModernDesign" industry="Agency" jobs={8} status="Verified" logo="MD" />
+              {companies
+                .filter(c => !search || (c.name || '').toLowerCase().includes(search.toLowerCase()))
+                .map(c => (
+                  <CompanyRow 
+                    key={c.id} 
+                    name={c.name} 
+                    industry={c.industry || '—'} 
+                    jobs={c.active_jobs ?? 0} 
+                    status={c.verified ? 'Verified' : 'Pending'} 
+                    logo={(c.name || 'C').slice(0,2).toUpperCase()} 
+                    onToggleVerify={async () => {
+                      try {
+                        const updated = await apiClient(`/api/companies/${c.id}`, { method: 'PATCH', body: JSON.stringify({ verified: !c.verified }) });
+                        setCompanies(prev => prev.map(p => p.id === c.id ? { ...p, verified: updated.verified } : p));
+                      } catch {}
+                    }}
+                  />
+                ))}
             </tbody>
           </table>
         </div>
@@ -85,15 +119,28 @@ const CompaniesContent = () => {
               </button>
             </div>
 
-            <form className="p-6 space-y-4" onSubmit={(e) => e.preventDefault()}>
+            <form className="p-6 space-y-4" onSubmit={async (e) => {
+              e.preventDefault();
+              if (!newName) return;
+              setSaving(true);
+              try {
+                await apiClient('/api/companies', { method: 'POST', body: JSON.stringify({ name: newName, industry: newIndustry, location: newLocation }) });
+                setIsModalOpen(false);
+                setNewName('');
+                setNewIndustry('Software & Tech');
+                setNewLocation('');
+                await refresh();
+              } catch {}
+              setSaving(false);
+            }}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-sm font-bold text-[#111418]">Company Name</label>
-                  <input type="text" placeholder="e.g. Acme Inc" className="modal-input" />
+                  <input type="text" placeholder="e.g. Acme Inc" className="modal-input" value={newName} onChange={(e) => setNewName(e.target.value)} />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-sm font-bold text-[#111418]">Industry</label>
-                  <select className="modal-input">
+                  <select className="modal-input" value={newIndustry} onChange={(e) => setNewIndustry(e.target.value)}>
                     <option>Software & Tech</option>
                     <option>Healthcare</option>
                     <option>Finance</option>
@@ -104,8 +151,8 @@ const CompaniesContent = () => {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-bold text-[#111418]">Company Website</label>
-                <input type="url" placeholder="https://acme.com" className="modal-input" />
+                <label className="text-sm font-bold text-[#111418]">Location</label>
+                <input type="text" placeholder="City, Country" className="modal-input" value={newLocation} onChange={(e) => setNewLocation(e.target.value)} />
               </div>
 
               <div className="space-y-1.5">
@@ -123,7 +170,8 @@ const CompaniesContent = () => {
                 </button>
                 <button 
                   type="submit"
-                  className="flex-1 px-4 py-2.5 bg-[#137fec] text-white font-bold rounded-lg text-sm hover:bg-[#137fec]/90 shadow-md shadow-[#137fec]/20 transition-all"
+                  disabled={saving}
+                  className="flex-1 px-4 py-2.5 bg-[#137fec] text-white font-bold rounded-lg text-sm hover:bg-[#137fec]/90 shadow-md shadow-[#137fec]/20 transition-all disabled:opacity-60"
                 >
                   Verify & Add
                 </button>
@@ -138,7 +186,7 @@ const CompaniesContent = () => {
 
 // --- Sub-components ---
 
-const CompanyRow = ({ name, industry, jobs, status, logo }: any) => (
+const CompanyRow = ({ name, industry, jobs, status, logo, onToggleVerify }: any) => (
   <tr className="hover:bg-[#f6f7f8]/50 transition-colors">
     <td className="px-6 py-4">
       <div className="flex items-center gap-3">
@@ -158,8 +206,8 @@ const CompanyRow = ({ name, industry, jobs, status, logo }: any) => (
       </span>
     </td>
     <td className="px-6 py-4 text-right">
-      <button className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-[#137fec]">
-        <span className="material-symbols-outlined">edit</span>
+      <button className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-[#137fec]" onClick={onToggleVerify}>
+        <span className="material-symbols-outlined">{status === 'Verified' ? 'cancel' : 'verified'}</span>
       </button>
     </td>
   </tr>

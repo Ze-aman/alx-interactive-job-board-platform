@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const EmployerProfileModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+export const EmployerProfileModal = ({ isOpen, onClose, company }: { isOpen: boolean; onClose: () => void; company?: { name?: string; industry?: string; location?: string; verified?: boolean } }) => {
   if (!isOpen) return null;
 
   return (
@@ -32,11 +32,11 @@ export const EmployerProfileModal = ({ isOpen, onClose }: { isOpen: boolean; onC
           {/* Header Content */}
           <div className="mt-20 px-8 flex flex-wrap justify-between items-start gap-4">
             <div>
-              <h1 className="text-3xl font-black text-[#111418] tracking-tight">CorpTech Inc.</h1>
-              <p className="text-lg text-[#137fec] font-bold">Technology & Software Services</p>
+              <h1 className="text-3xl font-black text-[#111418] tracking-tight">{company?.name || 'CorpTech Inc.'}</h1>
+              <p className="text-lg text-[#137fec] font-bold">{company?.industry || '—'}</p>
               <div className="flex gap-4 mt-2">
                 <span className="flex items-center gap-1 text-sm font-medium text-[#617589]">
-                  <span className="material-symbols-outlined text-sm">location_on</span> Austin, TX
+                  <span className="material-symbols-outlined text-sm">location_on</span> {company?.location || '—'}
                 </span>
                 <span className="flex items-center gap-1 text-sm font-medium text-[#617589]">
                   <span className="material-symbols-outlined text-sm">group</span> 500-1000 Employees

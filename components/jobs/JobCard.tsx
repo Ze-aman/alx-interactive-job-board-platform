@@ -1,8 +1,10 @@
-import React from 'react';
-import Link from 'next/link';
+import React, { useState } from 'react';
+import { useRouter } from 'next/router';
+import { useAuth } from '@/hooks/useAuth';
+import { AuthModal } from '@/components/auth/AuthModal';
 
 interface JobCardProps {
-  id: string; // Required for dynamic routing
+  id: string;
   title: string;
   company: string;
   location: string;
@@ -24,6 +26,21 @@ export const JobCard = ({
   isRemote,
   logoColor = "bg-[#137fec]/10",
 }: JobCardProps) => {
+  const router = useRouter();
+  const { user } = useAuth();
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isApplying, setIsApplying] = useState(false);
+
+  const handleApply = () => {
+    if (user) {
+      router.push(`/jobs/${id}`);
+    } else {
+      setIsAuthOpen(true);
+    }
+  };
+
+  const goDetails = () => router.push(`/jobs/${id}`);
+
   return (
     <div className="bg-white border border-[#f0f2f4] p-6 rounded-2xl hover:shadow-md transition-all group flex flex-col h-full">
       {/* Top Section: Logo & Title */}
@@ -34,7 +51,7 @@ export const JobCard = ({
             <div className={`w-full h-full rounded-lg ${logoColor}`} />
           </div>
           <div>
-            <h3 className="text-lg font-extrabold text-[#111418] group-hover:text-[#137fec] transition-colors line-clamp-1">
+            <h3 onClick={goDetails} className="cursor-pointer text-lg font-extrabold text-[#111418] group-hover:text-[#137fec] transition-colors line-clamp-1">
               {title}
             </h3>
             <p className="text-[#617589] text-sm font-semibold">
@@ -66,13 +83,23 @@ export const JobCard = ({
       <div className="flex items-center justify-between mt-auto">
         <span className="text-xs font-medium text-[#94a3b8]">{postedAt}</span>
         
-        {/* Navigation to Detail Page */}
-        <Link href={`/jobs/${id}`}>
-          <button className="bg-[#137fec] text-white font-bold text-sm px-6 py-2.5 rounded-xl hover:shadow-lg transition-all">
-            Apply Now
-          </button>
-        </Link>
+        <button
+          onClick={handleApply}
+          disabled={isApplying}
+          className="bg-[#137fec] text-white font-bold text-sm px-6 py-2.5 rounded-xl hover:shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          {isApplying ? 'Applying...' : 'Apply Now'}
+        </button>
       </div>
+    {isAuthOpen && (
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+        onSwitchToRegister={() => {}}
+        onForgotPassword={() => {}}
+        onSuccess={() => router.push(`/jobs/${id}`)}
+      />
+    )}
     </div>
   );
 };
