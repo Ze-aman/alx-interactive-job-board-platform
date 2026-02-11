@@ -2,7 +2,8 @@
 import "@/styles/globals.css";
 //import 'react-quill/dist/quill.snow.css';
 import type { AppProps } from "next/app";
-import { Header } from "@/components/layout/Header";
+import dynamic from "next/dynamic";
+const Header = dynamic(() => import("@/components/layout/Header").then(m => m.Header), { ssr: false });
 import { Footer } from "@/components/layout/Footer"; 
 import { useRouter } from "next/router";
 import { JobProvider } from "@/context/JobContext";

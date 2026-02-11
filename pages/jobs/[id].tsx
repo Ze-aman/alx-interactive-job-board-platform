@@ -35,8 +35,9 @@ export default function JobDetail() {
       try {
         const data = await apiClient(`/api/jobs/${id}`);
         setJob(data);
-      } catch (e: any) {
-        setError(e?.message || 'Failed to load job');
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : 'Failed to load job';
+        setError(msg);
       } finally {
         setLoading(false);
       }
@@ -86,7 +87,7 @@ export default function JobDetail() {
                   <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[#617589] font-semibold">
                     <span className="flex items-center gap-2"><span className="material-symbols-outlined text-xl">business</span> {job?.company_name || ''}</span>
                     <span className="flex items-center gap-2"><span className="material-symbols-outlined text-xl">location_on</span> {job?.location || ''}</span>
-                    <span className="flex items-center gap-2"><span className="material-symbols-outlined text-xl">schedule</span> {job ? new Date(job.created_at).toLocaleDateString() : ''}</span>
+                    <span className="flex items-center gap-2" suppressHydrationWarning><span className="material-symbols-outlined text-xl">schedule</span> {job ? new Date(job.created_at).toISOString().slice(0,10) : ''}</span>
                   </div>
                 </div>
                 <div className="flex gap-3 w-full md:w-auto">
@@ -138,40 +139,40 @@ export default function JobDetail() {
           </div>
 
           {/* Right Column: Application Sidebar */}
-          <aside className="w-full lg:w-[30%]">
-            <div className="sticky top-24 bg-white border border-[#f0f2f4] rounded-2xl p-6 shadow-xl">
-              <h3 className="text-xl font-black text-[#111418] mb-6">Apply for this position</h3>
-              <div className="space-y-4">
-                {!canApply && (
-                  <p className="text-sm text-[#617589]">Sign in as a candidate to apply.</p>
-                )}
-                <button
-                  disabled={!canApply || isApplied || applyLoading}
-                  onClick={async () => {
-                    if (!id) return;
-                    setApplyLoading(true);
-                    setApplyMsg(null);
-                    try {
-                      await apiClient('/api/applications', { method: 'POST', body: JSON.stringify({ job_id: Number(id) }) });
-                      setIsApplied(true);
-                      setApplyMsg('Application submitted.');
-                    } catch (e: any) {
-                      setApplyMsg(e?.message || 'Failed to submit application');
-                    } finally {
-                      setApplyLoading(false);
-                    }
+          {canApply && (
+            <aside className="w-full lg:w-[30%]">
+              <div className="sticky top-24 bg-white border border-[#f0f2f4] rounded-2xl p-6 shadow-xl">
+                <h3 className="text-xl font-black text-[#111418] mb-6">Apply for this position</h3>
+                <div className="space-y-4">
+                  <button
+                    disabled={!canApply || isApplied || applyLoading}
+                    onClick={async () => {
+                      if (!id) return;
+                      setApplyLoading(true);
+                      setApplyMsg(null);
+                      try {
+                        await apiClient('/api/applications', { method: 'POST', body: JSON.stringify({ job_id: Number(id) }) });
+                        setIsApplied(true);
+                        setApplyMsg('Application submitted.');
+                      } catch (e: unknown) {
+                        const msg = e instanceof Error ? e.message : 'Failed to submit application';
+                        setApplyMsg(msg);
+                      } finally {
+                        setApplyLoading(false);
+                      }
                   }}
-                  className={`w-full ${isApplied ? 'bg-green-600' : 'bg-[#137fec] hover:bg-[#137fec]/90'} text-white font-black py-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 mt-2 disabled:opacity-60`}
-                >
-                  {isApplied ? 'Applied' : applyLoading ? 'Submitting...' : 'Submit Application'}
-                  <span className="material-symbols-outlined text-lg">{isApplied ? 'check' : 'arrow_forward'}</span>
-                </button>
-                {applyMsg && <p className={`text-xs ${isApplied ? 'text-green-700' : 'text-red-600'}`}>{applyMsg}</p>}
+                    className={`w-full ${isApplied ? 'bg-green-600' : 'bg-[#137fec] hover:bg-[#137fec]/90'} text-white font-black py-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 mt-2 disabled:opacity-60`}
+                  >
+                    {isApplied ? 'Applied' : applyLoading ? 'Submitting...' : 'Submit Application'}
+                    <span className="material-symbols-outlined text-lg">{isApplied ? 'check' : 'arrow_forward'}</span>
+                  </button>
+                  {applyMsg && <p className={`text-xs ${isApplied ? 'text-green-700' : 'text-red-600'}`}>{applyMsg}</p>}
+                </div>
+                {loading && <p className="text-xs text-[#617589] mt-4">Loading job...</p>}
+                {error && <p className="text-xs text-red-600 mt-2">{error}</p>}
               </div>
-              {loading && <p className="text-xs text-[#617589] mt-4">Loading job...</p>}
-              {error && <p className="text-xs text-red-600 mt-2">{error}</p>}
-            </div>
-          </aside>
+            </aside>
+          )}
         </div>
       </SectionContainer>
     </div>

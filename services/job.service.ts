@@ -7,13 +7,29 @@ export const getFilteredJobs = async ({
   experience,
   page = 1,
   limit = 10,
-}: any) => {
+}: {
+  category?: string | string[];
+  location?: string;
+  search?: string;
+  experience?: string | string[];
+  page?: number;
+  limit?: number;
+}) => {
   const where: string[] = [];
-  const values: any[] = [];
+  const values: string[] = [];
 
   if (category) {
-    where.push('j.department = ?');
-    values.push(category);
+    if (Array.isArray(category)) {
+      const cats = category.filter((c) => String(c).trim());
+      if (cats.length) {
+        const placeholders = cats.map(() => '?').join(',');
+        where.push(`j.department IN (${placeholders})`);
+        values.push(...cats);
+      }
+    } else {
+      where.push('j.department = ?');
+      values.push(category);
+    }
   }
 
   if (location) {
@@ -27,17 +43,36 @@ export const getFilteredJobs = async ({
   }
 
   if (typeof experience !== 'undefined') {
-    const exp = experience;
+    const toPatterns = (exp: string) => {
+      if (exp === 'entry') return ['%Entry%', '%Junior%', '%Intern%', '%Associate%'];
+      if (exp === 'mid') return ['%Mid%', '%Intermediate%', '%II%', '%Experienced%'];
+      if (exp === 'senior') return ['%Senior%', '%Lead%', '%Principal%', '%Staff%'];
+      return [];
+    };
 
-    if (exp === 'entry') {
-      where.push('(j.title LIKE ? OR j.title LIKE ? OR j.title LIKE ? OR j.title LIKE ?)');
-      values.push('%Entry%', '%Junior%', '%Intern%', '%Associate%');
-    } else if (exp === 'mid') {
-      where.push('(j.title LIKE ? OR j.title LIKE ? OR j.title LIKE ? OR j.title LIKE ?)');
-      values.push('%Mid%', '%Intermediate%', '%II%', '%Experienced%');
-    } else if (exp === 'senior') {
-      where.push('(j.title LIKE ? OR j.title LIKE ? OR j.title LIKE ? OR j.title LIKE ?)');
-      values.push('%Senior%', '%Lead%', '%Principal%', '%Staff%');
+    if (Array.isArray(experience)) {
+      const exps = experience.filter((e) => ['entry','mid','senior'].includes(String(e)));
+      if (exps.length) {
+        const groupSQLs: string[] = [];
+        const groupValues: string[] = [];
+        exps.forEach((e) => {
+          const pats = toPatterns(String(e));
+          if (pats.length) {
+            groupSQLs.push('(j.title LIKE ? OR j.title LIKE ? OR j.title LIKE ? OR j.title LIKE ?)');
+            groupValues.push(...pats);
+          }
+        });
+        if (groupSQLs.length) {
+          where.push(`(${groupSQLs.join(' OR ')})`);
+          values.push(...groupValues);
+        }
+      }
+    } else {
+      const pats = toPatterns(String(experience));
+      if (pats.length) {
+        where.push('(j.title LIKE ? OR j.title LIKE ? OR j.title LIKE ? OR j.title LIKE ?)');
+        values.push(...pats);
+      }
     }
   }
 

@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { EmployerProfileModal } from '../modals/EmployerProfileModal';
+import { useAuth } from '@/hooks/useAuth';
+import { apiClient } from '@/lib/apiClient';
+import Image from 'next/image';
 
 interface EmployerLayoutProps {
   children: React.ReactNode;
@@ -9,8 +12,9 @@ interface EmployerLayoutProps {
 
 export const EmployerLayout = ({ children }: EmployerLayoutProps) => {
   const router = useRouter();
+  const { logout } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [company, setCompany] = useState<any>(null);
+  const [company, setCompany] = useState<CompanyProfile | null>(null);
 
   React.useEffect(() => {
     if (router.query.profile === '1') {
@@ -48,7 +52,7 @@ export const EmployerLayout = ({ children }: EmployerLayoutProps) => {
       <aside className="w-64 bg-white border-r border-[#dbe0e6] flex flex-col fixed h-full z-20">
         <div className="p-6 flex items-center gap-3">
           {company?.logo_url ? (
-            <img src={company.logo_url} alt="Logo" className="size-10 rounded-lg object-cover border border-[#dbe0e6]" />
+            <Image src={company.logo_url} alt="Logo" width={40} height={40} className="size-10 rounded-lg object-cover border border-[#dbe0e6]" />
           ) : (
             <div className="bg-[#137fec] size-10 rounded-lg flex items-center justify-center text-white shadow-lg shadow-[#137fec]/20">
               <span className="material-symbols-outlined">corporate_fare</span>
@@ -89,7 +93,7 @@ export const EmployerLayout = ({ children }: EmployerLayoutProps) => {
         </div>
 
         <div className="p-4 border-t border-[#dbe0e6]">
-          <button className="flex items-center gap-3 px-4 py-3 w-full rounded-lg text-red-500 hover:bg-red-50 transition-colors group">
+          <button onClick={async () => { try { await apiClient('/api/auth/logout', { method: 'POST' }); } catch {} logout(); }} className="flex items-center gap-3 px-4 py-3 w-full rounded-lg text-red-500 hover:bg-red-50 transition-colors group">
             <span className="material-symbols-outlined transition-transform group-hover:-translate-x-1">logout</span>
             <span className="font-bold text-sm">Logout</span>
           </button>
@@ -156,3 +160,4 @@ export const EmployerLayout = ({ children }: EmployerLayoutProps) => {
     </div>
   );
 };
+interface CompanyProfile { name?: string; logo_url?: string }

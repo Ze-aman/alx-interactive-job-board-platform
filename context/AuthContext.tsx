@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 
-type UserRole = 'candidate' | 'employer';
+type UserRole = 'candidate' | 'employer' | 'admin';
 
 interface User {
   id: number;
@@ -19,18 +19,15 @@ interface AuthContextType {
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const stored = localStorage.getItem('user');
+    return stored ? JSON.parse(stored) as User : null;
+  });
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  useEffect(() => {
-    // Load session on refresh
-    const stored = localStorage.getItem('user');
-    if (stored) {
-      setUser(JSON.parse(stored));
-    }
-    setLoading(false);
-  }, []);
+  useEffect(() => {}, []);
 
   const login = (userData: User) => {
     localStorage.setItem('user', JSON.stringify(userData));

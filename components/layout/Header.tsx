@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { AuthModal } from '../auth/AuthModal';
 import { RegisterModal } from '../auth/RegisterModal';
 import { ResetPasswordModal } from '../auth/ResetPasswordModal';
@@ -35,15 +36,17 @@ export const Header = () => {
     <>
       <header className="sticky top-0 z-50 w-full border-b border-[#f0f2f4] bg-white px-4 md:px-10 lg:px-20 py-3 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-4 hover:opacity-90 transition-opacity">
-          <div className="text-[#137fec] w-8 h-8">
-            <svg fill="currentColor" viewBox="0 0 48 48">
-              <path d="M24 4H6V17.3333V30.6667H24V44H42V30.6667V17.3333H24V4Z" />
-            </svg>
-          </div>
-          <h2 className="text-[#111418] text-xl font-black tracking-tight font-display">JobPortal</h2>
+          <Image
+            src="/images/logo.png"
+            alt="JobPortal logo"
+            width={360}
+            height={96}
+            className="h-12 w-auto"
+            priority
+          />
         </Link>
 
-        <div className="flex items-center gap-2 md:gap-4">
+        <div className="flex items-center gap-2 md:gap-4" suppressHydrationWarning>
           {user ? (
             <div className="relative">
               <button
@@ -54,12 +57,12 @@ export const Header = () => {
               {isMenuOpen && (
                 <div className="absolute right-0 top-12 bg-white border border-[#dbe0e6] rounded-xl shadow-lg w-44">
                   <Link
-                    href={user.role === 'employer' ? '/employer/profile' : '/profile/preview'}
+                    href={user.role === 'admin' ? '/admin' : (user.role === 'employer' ? '/employer/profile' : '/profile/preview')}
                     className="block px-4 py-2 text-sm font-bold text-[#111418] hover:bg-slate-50"
                     onClick={() => setIsMenuOpen(false)}
                   >Profile</Link>
                   <Link
-                    href={user.role === 'employer' ? '/employer' : '/dashboard'}
+                    href={user.role === 'admin' ? '/admin' : (user.role === 'employer' ? '/employer' : '/dashboard')}
                     className="block px-4 py-2 text-sm font-bold text-[#111418] hover:bg-slate-50"
                     onClick={() => setIsMenuOpen(false)}
                   >Dashboard</Link>

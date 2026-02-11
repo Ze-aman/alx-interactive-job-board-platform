@@ -2,9 +2,9 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 
 export interface JobFilters {
   search?: string;
-  category?: string;
+  category?: string | string[];
   location?: string;
-  experience?: 'entry' | 'mid' | 'senior';
+  experience?: 'entry' | 'mid' | 'senior' | Array<'entry' | 'mid' | 'senior'>;
   page?: number;
 }
 
@@ -39,6 +39,13 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
     const usp = new URLSearchParams();
     Object.entries(filters).forEach(([key, val]) => {
       if (val === undefined || val === null) return;
+      if (Array.isArray(val)) {
+        val.forEach((v) => {
+          const str = String(v).trim();
+          if (str) usp.append(key, str);
+        });
+        return;
+      }
       const str = String(val);
       if (str.trim() === '') return;
       usp.append(key, str);

@@ -1,4 +1,6 @@
 import React from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { apiClient } from '@/lib/apiClient';
 
 interface SidebarProps {
   activeTab: string;
@@ -6,6 +8,7 @@ interface SidebarProps {
 }
 
 const AdminSidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
+  const { logout } = useAuth();
   return (
     <aside className="w-64 bg-white border-r border-[#dbe0e6] flex flex-col fixed h-full z-20">
       <div className="p-6 flex items-center gap-3">
@@ -43,7 +46,7 @@ const AdminSidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
       </nav>
 
       <div className="p-4 border-t border-[#dbe0e6]">
-        <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors font-medium">
+        <button onClick={async () => { try { await apiClient('/api/auth/logout', { method: 'POST' }); } catch {} logout(); }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors font-medium">
           <span className="material-symbols-outlined">logout</span>
           <span className="text-sm">Logout</span>
         </button>

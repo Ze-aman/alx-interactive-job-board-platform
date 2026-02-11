@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import { SectionContainer } from './SectionContainer';
 
 export const Footer = () => {
@@ -6,14 +7,13 @@ export const Footer = () => {
     <footer className="mt-24 border-t border-[#f0f2f4] bg-[#f8fafc] py-20">
       <SectionContainer className="grid grid-cols-1 md:grid-cols-12 gap-12">
         <div className="md:col-span-4">
-          <div className="flex items-center gap-2 mb-8">
-            <div className="text-[#137fec] w-8 h-8"><svg fill="currentColor" viewBox="0 0 48 48"><path d="M24 4H6V17.3333V30.6667H24V44H42V30.6667V17.3333H24V4Z" /></svg></div>
-            <h2 className="text-[#111418] text-2xl font-black">JobPortal</h2>
+          <div className="flex items-center gap-3 mb-8">
+            <Image src="/images/logo.png" alt="JobPortal logo" width={200} height={52} className="h-13 w-auto" priority />
           </div>
-          <p className="text-[#617589] text-base leading-relaxed mb-8 max-w-sm">Connecting the world's best talent with the most innovative companies on the planet.</p>
+          <p className="text-[#617589] text-base leading-relaxed mb-8 max-w-sm">Connecting the world&apos;s best talent with the most innovative companies on the planet.</p>
         </div>
 
-        <div className="md:col-span-4">
+        <div className="md:col-span-4 md:col-start-9">
           <h4 className="font-black text-xs uppercase tracking-widest text-[#111418] mb-8">Subscribe</h4>
           <p className="text-sm font-semibold text-[#617589] mb-6">Get weekly job listings in your inbox.</p>
           <div className="flex gap-2">

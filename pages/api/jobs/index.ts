@@ -20,9 +20,9 @@ export default async function handler(
     } = req.query;
 
     const result = await getFilteredJobs({
-      category: category as string,
+      category: category as string | string[],
       location: location as string,
-      experience: experience as any,
+      experience: experience as string | string[],
       search: search as string,
       page: page ? Number(page) : 1,
       limit: limit ? Number(limit) : 10,

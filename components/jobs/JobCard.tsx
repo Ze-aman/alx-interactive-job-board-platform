@@ -29,7 +29,6 @@ export const JobCard = ({
   const router = useRouter();
   const { user } = useAuth();
   const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [isApplying, setIsApplying] = useState(false);
 
   const handleApply = () => {
     if (user) {
@@ -82,14 +81,15 @@ export const JobCard = ({
       {/* Bottom Section: Meta & CTA */}
       <div className="flex items-center justify-between mt-auto">
         <span className="text-xs font-medium text-[#94a3b8]">{postedAt}</span>
-        
-        <button
-          onClick={handleApply}
-          disabled={isApplying}
-          className="bg-[#137fec] text-white font-bold text-sm px-6 py-2.5 rounded-xl hover:shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
-        >
-          {isApplying ? 'Applying...' : 'Apply Now'}
-        </button>
+        {user?.role === 'candidate' && (
+          <button
+            onClick={handleApply}
+            disabled={false}
+            className="bg-[#137fec] text-white font-bold text-sm px-6 py-2.5 rounded-xl hover:shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            Apply Now
+          </button>
+        )}
       </div>
     {isAuthOpen && (
       <AuthModal
