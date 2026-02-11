@@ -64,6 +64,16 @@ export default function PipelineOverview() {
   const [loading, setLoading] = useState(false);
   const [reviewCandidateId, setReviewCandidateId] = useState<number | undefined>();
 
+  const loadApps = async () => {
+    if (!jobId) return;
+    setLoading(true);
+    try {
+      const res = await apiClient(`/api/employer/applicants?job_id=${jobId}`);
+      setApps(res.data || []);
+    } catch {}
+    setLoading(false);
+  };
+
   useEffect(() => {
     if (!jobId) return;
     const loadJob = async () => {
@@ -73,16 +83,7 @@ export default function PipelineOverview() {
   }, [jobId]);
 
   useEffect(() => {
-    if (!jobId) return;
-    const load = async () => {
-      setLoading(true);
-      try {
-        const res = await apiClient(`/api/employer/applicants?job_id=${jobId}`);
-        setApps(res.data || []);
-      } catch {}
-      setLoading(false);
-    };
-    load();
+    loadApps();
   }, [jobId]);
 
   const grouped = useMemo(() => {
