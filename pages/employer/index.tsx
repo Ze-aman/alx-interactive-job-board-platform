@@ -3,6 +3,7 @@ import { EmployerLayout } from '@/components/layout/EmployerLayout';
 import { PostJobModal } from '@/components/modals/PostJobModal';
 import { apiClient } from '@/lib/apiClient';
 import { useRequireAuth } from '@/lib/requireAuth';
+import { ApplicantReviewModal } from '@/components/modals/ApplicantReviewModal';
 
 type Job = {
   id: number;
@@ -33,6 +34,8 @@ export default function EmployerDashboard() {
   const [interviewsCount, setInterviewsCount] = useState(0);
   const [interviewsTrend, setInterviewsTrend] = useState<string>('');
   const [recentApplicants, setRecentApplicants] = useState<{ name: string; role: string; time: string; img: string }[]>([]);
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
+  const [reviewCandidateId, setReviewCandidateId] = useState<number | undefined>(undefined);
 
   const refreshJobs = async () => {
     setLoading(true);
@@ -99,7 +102,7 @@ export default function EmployerDashboard() {
         setInterviewsCount(it.count || 0);
         setNewAppsTrend(typeof ap.trendPct === 'number' ? `${ap.trendPct > 0 ? '+' : ''}${ap.trendPct}%` : '');
         setInterviewsTrend(typeof it.trendPct === 'number' ? `${it.trendPct > 0 ? '+' : ''}${it.trendPct}%` : '');
-      } catch (e) {}
+      } catch {}
     };
     fetchStats();
   }, []);
@@ -108,14 +111,15 @@ export default function EmployerDashboard() {
     const loadRecent = async () => {
       try {
         const res = await apiClient('/api/employer/recent-applicants');
-        const items = (res.data || []).map((r: any) => {
+        type RecentApplicant = { applied_at: string; name: string; role: string; img: string };
+        const items = (res.data || []).map((r: RecentApplicant) => {
           const dt = new Date(r.applied_at);
           const diffMin = Math.max(0, Math.round((Date.now() - dt.getTime()) / 60000));
           const time = diffMin < 60 ? `${diffMin}m ago` : `${Math.round(diffMin / 60)}h ago`;
           return { name: r.name, role: r.role, time, img: r.img };
         });
         setRecentApplicants(items);
-      } catch (e) {}
+      } catch {}
     };
     loadRecent();
   }, []);
@@ -126,7 +130,7 @@ export default function EmployerDashboard() {
       <div className="flex flex-wrap justify-between items-end gap-4 mb-8">
         <div>
           <h2 className="text-3xl font-black text-[#111418] tracking-tight">Hiring Overview</h2>
-          <p className="text-[#617589] font-medium mt-1">Monitor your company's recruitment performance.</p>
+          <p className="text-[#617589] font-medium mt-1">Monitor your company&apos;s recruitment performance.</p>
         </div>
         <button 
           onClick={() => setIsPostJobOpen(true)}
@@ -199,6 +203,13 @@ export default function EmployerDashboard() {
                       </td>
                       <td className="px-6 py-5 text-right">
                         <div className="flex items-center justify-end">
+                          <Link
+                            href={`/employer/pipeline/${job.id}`}
+                            className="mr-2 flex items-center gap-2 px-4 py-2 bg-[#137fec] text-white rounded-lg text-sm font-bold hover:bg-[#137fec]/90 transition-colors"
+                          >
+                            <span className="material-symbols-outlined text-sm">account_tree</span>
+                            Pipeline Overview
+                          </Link>
           <button
             onClick={() => handleEdit(job)}
             className="p-2 text-[#617589] hover:text-[#137fec] hover:bg-slate-100 rounded-md"
@@ -226,7 +237,7 @@ export default function EmployerDashboard() {
            <h3 className="text-xl font-bold text-[#111418]">Recent Applicants</h3>
            <div className="bg-white rounded-xl border border-[#dbe0e6] shadow-sm p-4 space-y-4">
               {recentApplicants.map((a) => (
-                <ApplicantItem key={`${a.img}-${a.time}`} name={a.name} role={a.role} time={a.time} img={a.img} />
+                <ApplicantItem key={`${a.img}-${a.time}`} name={a.name} role={a.role} time={a.time} img={a.img} onReview={() => { setReviewCandidateId(Number(a.img)); setIsReviewOpen(true); }} />
               ))}
               <button className="w-full py-3 text-xs font-bold text-[#617589] bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors">
                 Load More Applicants
@@ -235,7 +246,7 @@ export default function EmployerDashboard() {
         </div>
       </div>
 
-      {/* Post Job Modal Component */}
+      {/* Modals */}
       <PostJobModal
         isOpen={isPostJobOpen}
         onClose={() => {
@@ -245,13 +256,15 @@ export default function EmployerDashboard() {
         onCreated={refreshJobs}
         jobToEdit={jobToEdit}
       />
+      <ApplicantReviewModal isOpen={isReviewOpen} onClose={() => setIsReviewOpen(false)} candidateId={reviewCandidateId} />
     </EmployerLayout>
   );
 }
 
 // --- Helper Components ---
 
-const StatCard = ({ title, value, trend, icon, color, bgColor, isDown = false }: any) => (
+interface StatCardProps { title: string; value: string; trend: string; icon: string; color: string; bgColor: string; isDown?: boolean }
+const StatCard = ({ title, value, trend, icon, color, bgColor, isDown = false }: StatCardProps) => (
   <div className="bg-white p-6 rounded-xl border border-[#dbe0e6] shadow-sm">
     <div className="flex justify-between items-start mb-4">
       <div className={`p-3 ${bgColor} ${color} rounded-lg`}>
@@ -266,7 +279,7 @@ const StatCard = ({ title, value, trend, icon, color, bgColor, isDown = false }:
   </div>
 );
 
-const ApplicantItem = ({ name, role, time, img }: any) => (
+const ApplicantItem = ({ name, role, time, img, onReview }: { name: string; role: string; time: string; img: string; onReview?: () => void }) => (
   <div className="p-3 border border-slate-100 rounded-lg hover:border-[#137fec]/30 transition-all bg-white">
     <div className="flex items-center gap-3 mb-3">
       <div className="size-10 rounded-full bg-cover bg-center border border-slate-100" style={{ backgroundImage: `url('https://api.dicebear.com/7.x/avataaars/svg?seed=${img}')` }} />
@@ -277,10 +290,11 @@ const ApplicantItem = ({ name, role, time, img }: any) => (
       <div className="text-[10px] font-bold text-slate-400">{time}</div>
     </div>
     <div className="flex gap-2">
-      <button className="flex-1 py-2 text-xs font-bold bg-[#137fec] text-white rounded-lg hover:bg-[#137fec]/90 transition-colors">Review</button>
+      <button onClick={onReview} className="flex-1 py-2 text-xs font-bold bg-[#137fec] text-white rounded-lg hover:bg-[#137fec]/90 transition-colors">Review</button>
       <button className="px-3 py-2 text-xs font-bold border border-slate-200 text-[#617589] rounded-lg hover:bg-slate-50 transition-colors">
         <span className="material-symbols-outlined text-sm">mail</span>
       </button>
     </div>
   </div>
 );
+import Link from 'next/link';

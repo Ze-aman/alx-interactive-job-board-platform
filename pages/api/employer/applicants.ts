@@ -4,12 +4,13 @@ import { db } from '@/lib/database';
 
 function mapStatusToStage(status: string) {
   if (status === 'shortlisted') return 'Interview';
-  if (status === 'hired') return 'Offer';
+  if (status === 'offer') return 'Offer';
+  if (status === 'hired') return 'Hired';
   return 'Screening';
 }
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const auth = (req as any).user;
+  const auth = (req as unknown as { user: { role: string; companyId: number } }).user;
   if (auth.role !== 'employer') {
     return res.status(403).json({ message: 'Forbidden' });
   }
@@ -19,12 +20,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   try {
-    const { q, stage, job_id, page = '1', limit = '20' } = req.query as any;
+    const { q, stage, job_id, page = '1', limit = '20' } = req.query as Record<string, string>;
     const pageNum = Math.max(1, Number(page));
     const limitNum = Math.max(1, Math.min(100, Number(limit)));
     const offset = (pageNum - 1) * limitNum;
 
-    const filters: any[] = [auth.companyId];
+    const filters: unknown[] = [auth.companyId];
     let where = 'j.company_id = ?';
 
     if (q && typeof q === 'string') {
@@ -39,15 +40,16 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       let statusFilter: string | undefined;
       if (stage === 'Screening') statusFilter = 'applied';
       if (stage === 'Interview' || stage === 'Technical Test') statusFilter = 'shortlisted';
-      if (stage === 'Offer') statusFilter = 'hired';
+      if (stage === 'Offer') statusFilter = 'offer';
+      if (stage === 'Hired') statusFilter = 'hired';
       if (statusFilter) {
         where += ' AND ja.status = ?';
         filters.push(statusFilter);
       }
     }
 
-    const [rows]: any = await db.query(
-      `SELECT ja.id, ja.applied_at, ja.status, ja.job_id,
+    const [rows]: unknown[] = await db.query(
+      `SELECT ja.id, ja.applied_at, ja.status, ja.job_id, ja.candidate_id,
               j.title AS role,
               u.email,
               cp.full_name AS name
@@ -62,7 +64,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       [...filters, limitNum, offset]
     );
 
-    const data = (rows || []).map((r: any) => ({
+    const data = ((rows || []) as Array<{ id: number; status: string; job_id: number; candidate_id: number; role: string; email: string; applied_at: string; name: string }>).map((r) => ({
       id: r.id,
       name: r.name || 'Candidate',
       role: r.role,
@@ -70,7 +72,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       status: r.status || 'applied',
       email: r.email || '—',
       applied_at: r.applied_at,
-      img: String(r.job_id || '1'),
+      candidate_id: r.candidate_id,
+      img: String(r.candidate_id || '1'),
     }));
 
     return res.status(200).json({ data, pagination: { page: pageNum, limit: limitNum } });

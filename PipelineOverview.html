@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Applicant Tracking System View</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #334155;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased overflow-x-hidden min-h-screen">
+<!-- Top Navigation Bar -->
+<header class="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md">
+<div class="max-w-[1440px] mx-auto px-6 h-16 flex items-center justify-between gap-8">
+<div class="flex items-center gap-8 shrink-0">
+<div class="flex items-center gap-3">
+<div class="size-8 bg-primary rounded-lg flex items-center justify-center text-white">
+<span class="material-symbols-outlined">layers</span>
+</div>
+<h2 class="text-xl font-bold tracking-tight">HireFlow <span class="text-primary">ATS</span></h2>
+</div>
+<nav class="hidden lg:flex items-center gap-6">
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Dashboard</a>
+<a class="text-sm font-semibold text-primary" href="#">Jobs</a>
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Candidates</a>
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Reports</a>
+</nav>
+</div>
+<div class="flex-1 max-w-md hidden md:block">
+<div class="relative group">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+<span class="material-symbols-outlined text-[20px]">search</span>
+</div>
+<input class="block w-full pl-10 pr-3 py-2 border-none bg-slate-100 dark:bg-slate-800 rounded-lg text-sm placeholder-slate-500 focus:ring-2 focus:ring-primary transition-all" placeholder="Search candidates, jobs..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4 shrink-0">
+<button class="hidden sm:flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-primary/90 transition-all">
+<span class="material-symbols-outlined text-[20px]">add</span>
+<span>Add Candidate</span>
+</button>
+<div class="size-10 rounded-full border-2 border-slate-200 dark:border-slate-700 bg-cover bg-center" data-alt="User profile avatar of a hiring manager" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDiT08ZJJAOSEIkSwjz0QPPMrPB5oDB3Joed5RxnxNdCh7X8vGkn9saBC7a6G60iDnEx8oXrraQaUIFwFuQo1RzqAUkgYY-GqM9ca-KqzkL271k5LoPefZsIXYV9p-QXvuGiq3omvQKrJd3WSKwBLJvjbkX4lyV8xWxiatXeQ0vcN629BdZKLkxlHpuLRL8_Az7Yl9Wjhq3n0mkr3SxbIlHef34ANUnX4wgRizxfPVUzENQGY1N1hrN-NJxSUqdgb4BkgyVkD0LSYeI");'></div>
+</div>
+</div>
+</header>
+<main class="max-w-[1440px] mx-auto px-6 py-6 space-y-6">
+<!-- Filter Bar & Breadcrumbs -->
+<div class="flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<div>
+<div class="flex items-center gap-2 text-sm text-slate-500 mb-1">
+<a class="hover:underline" href="#">Jobs</a>
+<span class="material-symbols-outlined text-xs">chevron_right</span>
+<span class="text-slate-900 dark:text-slate-200 font-medium">Senior Product Designer</span>
+</div>
+<h1 class="text-2xl font-bold">Pipeline Overview</h1>
+</div>
+<div class="flex gap-2">
+<button class="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 transition-colors">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-300">share</span>
+</button>
+<button class="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 transition-colors">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-300">settings</span>
+</button>
+</div>
+</div>
+<!-- ToolBar & Chips -->
+<div class="flex flex-wrap items-center justify-between gap-4 p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+<div class="flex flex-wrap items-center gap-3">
+<div class="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-slate-700 rounded-lg cursor-pointer hover:bg-slate-200 transition-colors">
+<span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Job Title:</span>
+<span class="text-sm font-medium">Senior Product Designer</span>
+<span class="material-symbols-outlined text-sm">expand_more</span>
+</div>
+<div class="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
+<div class="flex flex-wrap gap-2">
+<button class="flex items-center gap-1.5 h-8 px-3 rounded-full bg-primary/10 text-primary border border-primary/20">
+<span class="text-xs font-bold">Exp: 5+ years</span>
+<span class="material-symbols-outlined text-xs">close</span>
+</button>
+<button class="flex items-center gap-1.5 h-8 px-3 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 transition-colors">
+<span class="text-xs font-bold">Match: &gt;85%</span>
+<span class="material-symbols-outlined text-xs">expand_more</span>
+</button>
+<button class="flex items-center gap-1.5 h-8 px-3 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 transition-colors">
+<span class="text-xs font-bold">Location: US/Remote</span>
+<span class="material-symbols-outlined text-xs">expand_more</span>
+</button>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">
+<span class="material-symbols-outlined text-lg">filter_alt</span>
+<span>Filters</span>
+</button>
+<button class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">
+<span class="material-symbols-outlined text-lg">sort</span>
+<span>Sort</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Kanban Board Area -->
+<div class="flex gap-6 overflow-x-auto pb-6 -mx-6 px-6 h-[calc(100vh-280px)] scrollbar-hide">
+<!-- Column: NEW -->
+<div class="flex flex-col min-w-[300px] w-full max-w-[320px] bg-slate-50/50 dark:bg-slate-900/50 rounded-xl p-3 border border-transparent">
+<div class="flex items-center justify-between px-2 mb-4">
+<div class="flex items-center gap-2">
+<h3 class="font-bold text-sm uppercase tracking-widest text-slate-500">New</h3>
+<span class="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300">12</span>
+</div>
+<button class="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors text-slate-400">
+<span class="material-symbols-outlined text-[20px]">more_horiz</span>
+</button>
+</div>
+<div class="flex flex-col gap-3 overflow-y-auto pr-1">
+<!-- Candidate Card -->
+<div class="bg-white dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all cursor-grab active:cursor-grabbing">
+<div class="flex items-start justify-between mb-3">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-cover bg-center" data-alt="Candidate profile headshot Alex Rivera" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDXMyjj89AFUAmI5xLYB3bkwxNibtaXqbKV6gCsKn2bEKRnjXjDPP4tOxo_7j4APsOHcXdwD5dgYqqdrvJmsIHej0mTDcu4JvdHhZAp-lDWlTE2nujJpzGizVQTCnC2yWCv1gkL7g6zdr8OT0N04JwDpLg1A7tJpQgdmtMIs13KRhH1IFWift1kH2KV9eJ_GQ55zM6Zlt7mnDMuEp25tKJBHFBJHd5RxnM5-bV8lmqJsAHGqkyKHSdLtKLW_iuX5966udcjtfXmj-i7");'></div>
+<div>
+<h4 class="font-bold text-sm">Alex Rivera</h4>
+<p class="text-xs text-slate-500">Applied 2h ago</p>
+</div>
+</div>
+<div class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-[10px] font-bold rounded">95% MATCH</div>
+</div>
+<p class="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 mb-3">8+ years exp • Senior Designer at Figma • UI/UX Specialist • Lead Design</p>
+<div class="flex items-center justify-between mt-auto">
+<div class="flex -space-x-2">
+<span class="size-6 rounded-full border-2 border-white dark:border-slate-800 bg-slate-100 flex items-center justify-center text-[10px] font-bold">AR</span>
+</div>
+<div class="flex gap-2">
+<span class="material-symbols-outlined text-slate-400 text-[18px]">chat_bubble</span>
+<span class="material-symbols-outlined text-slate-400 text-[18px]">attach_file</span>
+</div>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all cursor-grab active:cursor-grabbing">
+<div class="flex items-start justify-between mb-3">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-cover bg-center" data-alt="Candidate profile headshot Riley Vance" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAu3dPxWTYNAt2psatji3my0oF864F09PvTaGS4uX6dU1oVsL7hI0oEQL6SnmoHYenYl-BfdK6MlKNbBPIBLfV0XOm2KjG1DDeF2xu9cR774zys3nQLHTOd8lcdSJHJuOWd9J2SUHgY8cwccEEAPIacBqJLqqlil-n-738Aga_uIoZM6WgYiF5VEd5PqBzYdPuZkikjs1mQezc0tU6xj2t9986UACAqaG2qoHzba_BzUgpkmV123vA9eIRzWNUBe7SimIDmXl8N3XgH");'></div>
+<div>
+<h4 class="font-bold text-sm">Riley Vance</h4>
+<p class="text-xs text-slate-500">Applied 5h ago</p>
+</div>
+</div>
+<div class="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-[10px] font-bold rounded">82% MATCH</div>
+</div>
+<p class="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 mb-3">5 years exp • Fullstack Designer • React Native • Interaction expert</p>
+<div class="flex items-center justify-between mt-auto">
+<span class="material-symbols-outlined text-slate-400 text-[18px]">schedule</span>
+<div class="flex gap-2 text-slate-400">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Column: SCREENING -->
+<div class="flex flex-col min-w-[300px] w-full max-w-[320px] bg-slate-50/50 dark:bg-slate-900/50 rounded-xl p-3 border border-transparent">
+<div class="flex items-center justify-between px-2 mb-4">
+<div class="flex items-center gap-2">
+<h3 class="font-bold text-sm uppercase tracking-widest text-slate-500">Screening</h3>
+<span class="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300">8</span>
+</div>
+</div>
+<div class="flex flex-col gap-3 overflow-y-auto pr-1">
+<div class="bg-white dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all cursor-grab active:cursor-grabbing border-l-4 border-l-orange-400">
+<div class="flex items-start justify-between mb-3">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-cover bg-center" data-alt="Candidate profile headshot Jordan Smith" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDPIs2fs_MvrM7j3eJjYm9h3MSyY9zis1XbJgg5yXxEQoDMcNKrDoSXxYA5ma5SAIWWih2ETnQJhMoLelKrfDrmm31lATH2mrhOyYoqjxinazhCgM4Xa0-90mnRXvuZlOgv3oqlkGyuprYpDMa37l0HzCobVhtAmpga9u5IGvWETdz0PDfvzaI1PlWmGPn5p1pyBKvtjlR0cqB-bFTJwydBz2wZnmEZUxIIEWo0iNYSbAFbwVYmOoaTuX-eCaiZi-YIRvTKz_hEY6-e");'></div>
+<div>
+<h4 class="font-bold text-sm">Jordan Smith</h4>
+<p class="text-xs text-orange-600 font-medium italic">Call scheduled</p>
+</div>
+</div>
+<div class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-[10px] font-bold rounded">88% MATCH</div>
+</div>
+<p class="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 mb-3">6 years exp • UX Architect at Stripe • Design Systems specialist</p>
+<div class="flex items-center justify-between">
+<div class="flex gap-1">
+<span class="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-[10px]">Resume</span>
+<span class="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-[10px]">Portfolio</span>
+</div>
+<span class="material-symbols-outlined text-slate-400 text-[18px]">verified</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Column: INTERVIEW -->
+<div class="flex flex-col min-w-[300px] w-full max-w-[320px] bg-slate-50/50 dark:bg-slate-900/50 rounded-xl p-3 border border-transparent">
+<div class="flex items-center justify-between px-2 mb-4">
+<div class="flex items-center gap-2">
+<h3 class="font-bold text-sm uppercase tracking-widest text-slate-500">Interview</h3>
+<span class="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300">5</span>
+</div>
+</div>
+<div class="flex flex-col gap-3 overflow-y-auto pr-1">
+<div class="bg-white dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all cursor-grab active:cursor-grabbing">
+<div class="flex items-start justify-between mb-3">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-cover bg-center" data-alt="Candidate profile headshot Casey Kim" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDtA6P-A8X9wShXx9s9vkkJUdI9n9iP7CwQhWa_Uno9kCv9GlmpqO_D9jpSsssCLufO17us6uJ4MsvHieuq6jSEnJLK7blePQMDJPB6tUBe0fgES1rzt-T9BYSZkABX5Tv0kEtUVGbGExGnCif4sJFIRS3k4JOeGnTLE6iOEozBjdrZ4AJ581KY3iAaeet4E6_3yNKAhDBngS2OCNpHETgzJAm0GfjTsaEE4h7JwMIrnndgxXfcQzTo50XzgnpDNTBnXLc_GZzVAP1q");'></div>
+<div>
+<h4 class="font-bold text-sm">Casey Kim</h4>
+<p class="text-xs text-slate-500">Interview #3 • Tech</p>
+</div>
+</div>
+<div class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-[10px] font-bold rounded">92% MATCH</div>
+</div>
+<p class="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 mb-3">9 years exp • Principal Designer • Previous Meta &amp; Airbnb</p>
+<div class="flex items-center justify-between">
+<div class="flex gap-1 text-slate-500 items-center">
+<span class="material-symbols-outlined text-sm">calendar_today</span>
+<span class="text-[11px] font-medium">Tomorrow, 10:00 AM</span>
+</div>
+<button class="bg-primary/10 text-primary px-3 py-1 rounded text-[10px] font-bold">JOIN MEET</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Column: OFFER -->
+<div class="flex flex-col min-w-[300px] w-full max-w-[320px] bg-slate-50/50 dark:bg-slate-900/50 rounded-xl p-3 border border-transparent">
+<div class="flex items-center justify-between px-2 mb-4">
+<div class="flex items-center gap-2">
+<h3 class="font-bold text-sm uppercase tracking-widest text-slate-500">Offer</h3>
+<span class="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300">3</span>
+</div>
+</div>
+<div class="flex flex-col gap-3 overflow-y-auto pr-1">
+<div class="bg-white dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all cursor-grab active:cursor-grabbing border-t-4 border-t-primary">
+<div class="flex items-start justify-between mb-3">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-cover bg-center" data-alt="Candidate profile headshot Sam Low" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAFxuR6qoACysbjI5cLaHoaApMTAiFo9URzk4KaETXntfAr2hb9pVeBMRIs8xYBaN6SnV1IQJAiQ1GjPYAkyUJOmvjjAgb53xK0rIt0A-mJh3NpkRnNzjilTUD_TA_uuTtTb4wECq9zA7lV5BD4tRDH4Pe3B_VtYvzqUQUFaZmynjIBdTr_ROcUl0vgpVoPRTvqKnXXqj6L_qZLuLHa_Z9EmQd2UitkHyNjt1yJ7qg1FnBB3vlH5EC2-t5yNMUvtOYj7wRJz4SKKVqx");'></div>
+<div>
+<h4 class="font-bold text-sm">Sam Low</h4>
+<p class="text-xs text-primary font-bold">Offer Sent</p>
+</div>
+</div>
+<div class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-[10px] font-bold rounded">98% MATCH</div>
+</div>
+<p class="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 mb-3">12 years exp • Design Director • Exceptional portfolio</p>
+<div class="flex items-center justify-between bg-slate-50 dark:bg-slate-700/50 p-2 rounded mt-2">
+<span class="text-[10px] font-bold text-slate-500 uppercase">Negotiation</span>
+<div class="flex gap-2">
+<span class="material-symbols-outlined text-green-500 text-[18px]">check_circle</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Column: HIRED -->
+<div class="flex flex-col min-w-[300px] w-full max-w-[320px] bg-slate-50/50 dark:bg-slate-900/50 rounded-xl p-3 border border-transparent">
+<div class="flex items-center justify-between px-2 mb-4">
+<div class="flex items-center gap-2">
+<h3 class="font-bold text-sm uppercase tracking-widest text-slate-500">Hired</h3>
+<span class="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300">42</span>
+</div>
+</div>
+<div class="flex flex-col gap-3 overflow-y-auto pr-1">
+<div class="bg-white/60 dark:bg-slate-800/60 p-4 rounded-lg border border-slate-200 dark:border-slate-700 opacity-80">
+<div class="flex items-start justify-between mb-3">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-cover bg-center grayscale" data-alt="Candidate profile headshot Taylor Reed" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuA92L-OaftYo6AizPdgVM6F-oFFG2MJjONG7SItKqDUaOpKhOKAfAEWx3rH_IPJ8wHkZ08T24Ogrxbtk3HLOidskaZDaRRPO-Pb-Y-LPE2WLvVudZDJfL5RBhkHa0qGZRXhZe0xey4xTayjMOnYDKCD65DvlnoLZQQtsKSmNZszSy2q4lkqQvzLhPSPA-qKhlSsS1pIlfx106AOmbSJcjFByim7gOHN4Yoood36zS3JsmsgnLd6GLehmGAWL_x9zVjJehDrMnFab7sD");'></div>
+<div>
+<h4 class="font-bold text-sm">Taylor Reed</h4>
+<p class="text-xs text-slate-500 italic">Started Aug 15</p>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-white/60 dark:bg-slate-800/60 p-4 rounded-lg border border-slate-200 dark:border-slate-700 opacity-80">
+<div class="flex items-start justify-between mb-3">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-cover bg-center grayscale" data-alt="Candidate profile headshot Quinn Hudson" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAukG1Q5cLNMWkWH1_oycHoWW8KYEhl4Azz9ErPxmFi6D2Ouvfs219hDizfl-pFoDdaxlY2HQiRRHNLdVHZW4ld5NZId_HkoD6gsAnFz3ZMWO2fNRHV0-T0jEzrUWENC_7aQGsVG0Ks9PybllKYDDye8vdMlJTxz00RUxlrFOsfEZKWfgOV9NAIK5sUJwu5UwPToyrYY8kHfiZMTjheQ51oiUvsKng5yIIppI1UcvqhRhyUWt8v5XUND9x8Nv_P7P3m_Ieu9L4yb9Kg");'></div>
+<div>
+<h4 class="font-bold text-sm">Quinn Hudson</h4>
+<p class="text-xs text-slate-500 italic">Started Aug 01</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Float Action Button (Mobile only logic but here for visual) -->
+<div class="fixed bottom-8 right-8 lg:hidden">
+<button class="size-14 rounded-full bg-primary text-white shadow-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-3xl">add</span>
+</button>
+</div>
+</main>
+</body></html>
