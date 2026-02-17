@@ -26,8 +26,7 @@ export const EmployerLayout = ({ children }: EmployerLayoutProps) => {
   React.useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch('/api/profile/me');
-        const data = await res.json();
+        const data = await apiClient('/api/profile/me');
         if (data?.role === 'employer') setCompany(data.profile);
       } catch {}
     };

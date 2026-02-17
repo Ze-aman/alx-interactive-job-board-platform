@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { apiClient } from '@/lib/apiClient';
 
 interface RegisterModalProps {
   isOpen: boolean;
@@ -27,9 +28,8 @@ export const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }: RegisterModa
     setError('');
 
     try {
-      const response = await fetch('/api/auth/register', {
+      const data = await apiClient('/api/auth/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email,
           password,
@@ -38,10 +38,6 @@ export const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }: RegisterModa
           industry: role === 'employer' ? industry : undefined,
         }),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) throw new Error(data.message || 'Registration failed');
 
       alert("Success! You can now sign in.");
       onSwitchToLogin();

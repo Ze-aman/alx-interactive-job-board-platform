@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { apiClient } from '@/lib/apiClient';
 
 export interface JobFilters {
   search?: string;
@@ -53,8 +54,7 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
     const params = usp.toString();
 
     try {
-      const res = await fetch(`/api/jobs?${params}`);
-      const data = await res.json();
+      const data = await apiClient(`/api/jobs?${params}`);
       setJobs(Array.isArray(data?.data) ? data.data : []);
     } catch {
       setJobs([]);

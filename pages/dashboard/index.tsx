@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useRequireAuth } from '@/lib/requireAuth';
+import { apiClient } from '@/lib/apiClient';
 
 export default function DashboardPage() {
   useRequireAuth('candidate');
@@ -28,9 +29,7 @@ export default function DashboardPage() {
     if (company) params.set('company', company);
 
     const load = async () => {
-      const res = await fetch(`/api/applications?${params.toString()}`);
-      if (!res.ok) return;
-      const json = await res.json();
+      const json = await apiClient(`/api/applications?${params.toString()}`);
       const rows = json.data;
       const items = rows.map((r: any) => ({
         company: r.company_name,

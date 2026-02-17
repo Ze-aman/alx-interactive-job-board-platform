@@ -49,8 +49,7 @@ export default function JobDetail() {
     const checkApplied = async () => {
       if (!id) return;
       try {
-        const me = await fetch('/api/auth/me');
-        const session = await me.json();
+        const session = await apiClient('/api/auth/me');
         if (!session?.isLoggedIn || session.role !== 'candidate') {
           setCanApply(false);
           return;

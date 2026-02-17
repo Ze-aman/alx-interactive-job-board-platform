@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
+import { apiClient } from '@/lib/apiClient';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -42,17 +43,10 @@ export const AuthModal = ({ isOpen, onClose, onSwitchToRegister, onForgotPasswor
     setErrors({});
 
     try {
-      const response = await fetch('/api/auth/login', {
+      const data = await apiClient('/api/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Invalid credentials");
-      }
 
       login(data.user);
       if (onSuccess) {
