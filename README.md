@@ -2,6 +2,10 @@
 
 Enterprise-grade job marketplace with candidate, employer, and admin portals. Built on Next.js (Pages Router) with TypeScript, MySQL, and secure session-based auth. Designed for scalability, observability, and operational excellence.
 
+## Vercel Live URL
+
+https://alx-interactive-job-board-platform.vercel.app/
+
 ## Quick Start
 
 Prerequisites:
